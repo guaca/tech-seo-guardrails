@@ -1,0 +1,649 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "sampleConfig": {
+    "maxPagesPerTemplate": 5
+  },
+  "crawlConfig": {
+    "sitemapUrl": "/sitemap.xml",
+    "maxUrls": 100,
+    "concurrency": 10,
+    "timeoutMs": 10000,
+    "linkSampleSize": 5,
+    "sitemapUrlsShouldNotRedirect": true
+  },
+  "templates": {
+    "home": {
+      "urlPattern": "^/$",
+      "waitForReady": "networkidle",
+      "seo": {
+        "metadata": {
+          "enabled": true,
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": ""
+          },
+          "maxCanonicalTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "maxRobotsTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "selfReferencingCanonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          },
+          "hasCharset": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasViewport": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasFavicon": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "maxTitleTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          }
+        }
+      }
+    },
+    "other": {
+      "waitForReady": "networkidle",
+      "seo": {
+        "metadata": {
+          "enabled": true,
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": ""
+          },
+          "maxCanonicalTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "maxRobotsTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "selfReferencingCanonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          },
+          "hasCharset": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasViewport": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasFavicon": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "maxTitleTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          }
+        }
+      }
+    }
+  },
+  "pages": [
+    {
+      "path": "/",
+      "template": "home",
+      "description": "Home page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Home"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Home"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Home page description"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/collection1",
+      "template": "other",
+      "description": "Collection1 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Collection 1"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Collection 1"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/collection1"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Collection 1"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/collection2",
+      "template": "other",
+      "description": "Collection2 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Collection 2"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Collection 2"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/collection2"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Collection 2"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product1",
+      "template": "other",
+      "description": "Product1 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 1"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 1"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product1"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 1"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product2",
+      "template": "other",
+      "description": "Product2 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 2"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 2"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product2"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 2"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product3",
+      "template": "other",
+      "description": "Product3 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 3"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 3"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product3"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 3"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product4",
+      "template": "other",
+      "description": "Product4 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 4"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 4"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product4"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 4"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product5",
+      "template": "other",
+      "description": "Product5 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 5"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 5"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product5"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 5"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product6",
+      "template": "other",
+      "description": "Product6 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 6"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 6"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product6"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 6"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product7",
+      "template": "other",
+      "description": "Product7 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 7"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 7"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product7"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 7"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    },
+    {
+      "path": "/product8",
+      "template": "other",
+      "description": "Product8 page",
+      "seo": {
+        "metadata": {
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 8"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Product 8"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "/product8"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "index, follow"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "Description for Product 8"
+          },
+          "links": {
+            "enabled": false,
+            "severity": "warning",
+            "value": []
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          }
+        }
+      }
+    }
+  ]
+}

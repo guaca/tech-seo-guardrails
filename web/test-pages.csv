@@ -1,0 +1,12 @@
+URL,Template
+http://localhost:3000/,home
+http://localhost:3000/collection1/,collection
+http://localhost:3000/collection2/,collection
+http://localhost:3000/product1/,product
+http://localhost:3000/product2/,product
+http://localhost:3000/product3/,product
+http://localhost:3000/product4/,product
+http://localhost:3000/product5/,product
+http://localhost:3000/product6/,product
+http://localhost:3000/product7/,product
+http://localhost:3000/product8/,product

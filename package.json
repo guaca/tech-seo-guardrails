@@ -1,0 +1,64 @@
+{
+  "name": "tech-seo-guardrails",
+  "version": "0.1.0-alpha.1",
+  "description": "Scalable technical SEO guardrails for CI/CD — Playwright + Googlebot emulation",
+  "main": "src/index.js",
+  "bin": {
+    "seo-test": "bin/seo-test.js",
+    "seo-setup": "scripts/setup.js",
+    "seo-configure": "scripts/configure.js",
+    "seo-generate": "bin/seo-generate.js",
+    "seo-init-config": "bin/seo-init-config.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "tests/",
+    "scripts/setup.js",
+    "scripts/configure.js",
+    "scripts/select-tests.sh",
+    "scripts/init-generator-config.py",
+    "scripts/generate-from-sf.py",
+    "playwright.config.js",
+    "seo-checks.example.json",
+    ".env.example",
+    "pages.template.csv",
+    "docs/",
+    "templates/"
+  ],
+  "scripts": {
+    "prepare": "tsc",
+    "setup": "node scripts/setup.js",
+    "configure": "node scripts/configure.js",
+    "init-config": "python3 scripts/init-generator-config.py",
+    "generate": "python3 scripts/generate-from-sf.py",
+    "test": "npx playwright test",
+    "test:unit": "npx playwright test --project=unit",
+    "test:integration": "npx playwright test --project=integration",
+    "test:e2e": "npx playwright test --project=e2e",
+    "test:headed": "npx playwright test --headed",
+    "test:report": "npx playwright show-report"
+  },
+  "keywords": [
+    "seo",
+    "technical-seo",
+    "playwright",
+    "googlebot",
+    "ci-cd",
+    "testing",
+    "guardrails"
+  ],
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.2.3",
+    "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "enquirer": "^2.4.1",
+    "picocolors": "^1.1.1",
+    "robots-parser": "^3.0.1"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.59.1"
+  }
+}

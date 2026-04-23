@@ -1,0 +1,164 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "sampleConfig": {
+    "maxPagesPerTemplate": 5
+  },
+  "crawlConfig": {
+    "sitemapUrl": "/sitemap.xml",
+    "maxUrls": 100,
+    "concurrency": 10,
+    "timeoutMs": 10000,
+    "linkSampleSize": 5,
+    "sitemapUrlsShouldNotRedirect": true
+  },
+  "templates": {
+    "home": {
+      "urlPattern": "^/$",
+      "waitForReady": "networkidle",
+      "checks": {
+        "metadata": {
+          "enabled": true,
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": ""
+          },
+          "maxCanonicalTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "maxRobotsTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "selfReferencingCanonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          },
+          "hasCharset": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasViewport": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasFavicon": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "maxTitleTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          }
+        }
+      }
+    },
+    "other": {
+      "urlPattern": ".*",
+      "waitForReady": "networkidle",
+      "checks": {
+        "metadata": {
+          "enabled": true,
+          "title": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "h1": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaDescription": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "canonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": "TODO"
+          },
+          "metaRobots": {
+            "enabled": true,
+            "severity": "warning",
+            "value": ""
+          },
+          "maxCanonicalTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "maxRobotsTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          },
+          "selfReferencingCanonical": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hreflang": {
+            "enabled": true,
+            "severity": "warning",
+            "value": null
+          },
+          "hasCharset": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasViewport": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "hasFavicon": {
+            "enabled": true,
+            "severity": "warning",
+            "value": true
+          },
+          "maxTitleTags": {
+            "enabled": true,
+            "severity": "warning",
+            "value": 1
+          }
+        }
+      }
+    }
+  }
+}

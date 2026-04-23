@@ -1,0 +1,51 @@
+{
+  "baseUrl": "https://your-site.com",
+
+  "sampleConfig": {
+    "maxPagesPerTemplate": 5
+  },
+
+  "crawlConfig": {
+    "sitemapUrl": "/sitemap.xml",
+    "maxUrls": 500,
+    "maxUrlsPerTemplate": 5,
+    "concurrency": 10,
+    "timeoutMs": 10000,
+    "linkSampleSize": 5,
+    "sitemapUrlsShouldNotRedirect": true,
+    "retryAfterCapMs": 30000
+  },
+
+  "_comment_maxUrls": "When a sitemap index is provided, maxUrls applies per child sitemap. This ensures URLs from all sitemaps (e.g., products, blog, collections) are sampled fairly rather than one large sitemap exhausting the limit.",
+
+  "templates": {
+    "home": {
+      "urlPattern": "^/$",
+      "waitForReady": "networkidle",
+      "seo": {
+        "metadata": {
+          "title": { "enabled": true, "severity": "warning", "value": "Home | Site Name" },
+          "canonical": { "enabled": true, "severity": "warning", "value": "/" },
+          "metaRobots": { "enabled": true, "severity": "warning", "value": "index, follow" }
+        }
+      }
+    }
+  },
+
+  "pages": [
+    {
+      "path": "/",
+      "template": "home",
+      "description": "Home page",
+      "seo": {
+        "metadata": {
+          "title": { "enabled": true, "severity": "blocker", "value": "Home | Site Name" },
+          "h1": { "enabled": true, "severity": "blocker", "value": "Welcome to Our Site" },
+          "canonical": { "enabled": true, "severity": "blocker", "value": "/" },
+          "metaRobots": { "enabled": true, "severity": "blocker", "value": "index, follow" },
+          "metaDescription": { "enabled": true, "severity": "warning", "value": "The best place for SEO guardrails." }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "baseUrl": "https://your-site.com",
+
+  "sampleConfig": {
+    "maxPagesPerTemplate": 5
+  },
+
+  "crawlConfig": {
+    "sitemapUrl": "/sitemap.xml",
+    "maxUrls": 500,
+    "concurrency": 10,
+    "timeoutMs": 10000,
+    "linkSampleSize": 5,
+    "sitemapUrlsShouldNotRedirect": true
+  },
+
+  "_comment_maxUrls": "When a sitemap index is provided, maxUrls applies per child sitemap. This ensures URLs from all sitemaps (e.g., products, blog, collections) are sampled fairly rather than one large sitemap exhausting the limit.",
+
+  "templates": {
+    "_comment": "Templates are matched top-to-bottom by urlPattern (regex).",
+    
+    "home": {
+      "urlPattern": "^/$",
+      "waitForReady": "networkidle",
+      "checks": {
+        "metadata": {
+          "title": { "enabled": true, "severity": "blocker", "value": "TODO" },
+          "h1": { "enabled": true, "severity": "blocker", "value": "TODO" },
+          "metaDescription": { "enabled": true, "severity": "warning", "value": "TODO" },
+          "canonical": { "enabled": true, "severity": "blocker", "value": "TODO" },
+          "metaRobots": { "enabled": true, "severity": "blocker", "value": "" },
+          "maxCanonicalTags": { "enabled": true, "severity": "blocker", "value": 1 },
+          "maxRobotsTags": { "enabled": true, "severity": "blocker", "value": 1 },
+          "selfReferencingCanonical": { "enabled": true, "severity": "blocker", "value": true },
+          "links": { "enabled": true, "severity": "blocker", "value": [] },
+          "hreflang": { "enabled": false, "severity": "blocker", "value": null }
+        },
+        "images": {
+          "allImagesHaveAlt": { "enabled": true, "severity": "warning", "value": true },
+          "allImagesHaveDimensions": { "enabled": true, "severity": "warning", "value": true },
+          "lcpImageNotLazy": { "enabled": true, "severity": "warning", "value": true },
+          "lcpImageShouldHaveFetchPriority": { "enabled": true, "severity": "warning", "value": false },
+          "lcpSrcsetShouldReturn200": { "enabled": true, "severity": "warning", "value": false }
+        },
+        "ogTags": {
+          "tags": { 
+            "enabled": true, 
+            "severity": "warning", 
+            "value": {
+              "og:type": "website",
+              "og:site_name": "Your Site"
+            }
+          },
+          "requireImage": { "enabled": true, "severity": "warning", "value": true }
+        },
+        "renderingValidation": {
+          "noHiddenSeoContent": { "enabled": true, "severity": "blocker", "value": true },
+          "noFailedRequests": { "enabled": true, "severity": "warning", "value": true },
+          "noMixedContent": { "enabled": true, "severity": "blocker", "value": true },
+          "noVhTrap": { "enabled": true, "severity": "warning", "value": true }
+        },
+        "httpChecks": {
+          "expectedStatusCode": { "enabled": true, "severity": "blocker", "value": 200 },
+          "xRobotsTag": { "enabled": true, "severity": "blocker", "value": null },
+          "maxRedirects": { "enabled": true, "severity": "warning", "value": 1 },
+          "canonicalMustResolve": { "enabled": true, "severity": "blocker", "value": true },
+          "robotsTxtEnforcement": { "enabled": true, "severity": "blocker", "value": true }
+        }
+      }
+    },
+
+    "other": {
+      "urlPattern": ".*",
+      "waitForReady": "networkidle",
+      "checks": {
+        "metadata": {
+          "title": { "enabled": true, "severity": "blocker", "value": "TODO" },
+          "canonical": { "enabled": true, "severity": "blocker", "value": "TODO" }
+        }
+      }
+    }
+  }
+}
