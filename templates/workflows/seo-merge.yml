@@ -107,6 +107,7 @@ jobs:
 
       - name: Upload HTML report
         uses: actions/upload-artifact@v6
+        if: ${{ !cancelled() }}
         with:
           name: seo-test-report-push
           path: playwright-report/
