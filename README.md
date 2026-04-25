@@ -64,7 +64,7 @@ The CI workflow decouples the Playwright exit code from the merge gate: a post-r
 ### 1. Install
 
 ```bash
-npm install --save-dev github:guaca/automated-seo-guardrails
+npm install --save-dev github:guaca/tech-seo-guardrails
 npx playwright install chromium
 ```
 
@@ -172,7 +172,7 @@ If you are an SEO auditing a site and do not have access to the developer reposi
 2. **Initialize a new Node project and install the framework:**
    ```bash
    npm init -y
-   npm install --save-dev github:guaca/automated-seo-guardrails
+   npm install --save-dev github:guaca/tech-seo-guardrails
    npx playwright install chromium
    ```
 3. **Drop your Screaming Frog CSV** export into this folder.
@@ -194,7 +194,7 @@ As this project is in **Alpha**, updates to the core logic and CI workflows are 
 
 1. **Update the package:**
    ```bash
-   npm update github:guaca/automated-seo-guardrails
+   npm update github:guaca/tech-seo-guardrails
    ```
 2. **Re-sync your workflows and environment:**
    ```bash
@@ -221,19 +221,19 @@ No `playwright.config.js` changes are needed — `npx seo-test` handles it.
 
 | Category | Default severity | Key checks |
 |---|---|---|
-| HTTP response | blocker | Status code, X-Robots-Tag, robots.txt, canonical resolution |
+| HTTP response | warning | Status code, X-Robots-Tag, robots.txt, canonical resolution |
 | Core metadata | warning | Title, h1, canonical, meta robots, uniqueness, self-reference |
 | Meta description | warning | Exact match |
 | Open Graph | warning | `og:title`, `og:description`, `og:type`, `og:url`, `og:image` presence |
 | Twitter Cards | warning | `twitter:card`, `twitter:title` |
-| JSON-LD | blocker | Valid JSON, expected `@type`, required fields, and product price validation |
+| JSON-LD | warning | Valid JSON, expected `@type`, required fields, and product price validation |
 | Images | warning | Alt text, dimensions, LCP image not lazy, no broken images |
 | Link health | warning | No empty/js hrefs, internal links not nofollow, noopener on external links |
 | Heading hierarchy | warning | No skipped levels, no empty headings |
-| HTML fundamentals | blocker | charset, viewport, favicon, single `<title>` |
+| HTML fundamentals | warning | charset, viewport, favicon, single `<title>` |
 | Rendering validation | blocker¹ | Hidden SEO content, console errors, failed requests, mixed content |
 | Mobile usability | warning | Tap target size, font size minimum |
-| Server response | blocker | TTFB |
+| Server response | warning | TTFB |
 | Content quality | warning | Minimum word count |
 | Lazy content | configurable | Content visible after Googlebot viewport expansion |
 
