@@ -125,6 +125,8 @@ These run once per test run, not per page.
 - Canonical URL returns 404 — a canonical pointing to a non-200/304 URL is worse than no canonical
 - `Disallow: /static/` in `robots.txt` blocking your CSS/JS bundle
 
+**Basic mode:** `xRobotsTag: { "mode": "basic" }` asserts the header, if present, does not contain `noindex`, instead of matching an exact value. See [Basic mode contracts](./configuration.md#basic-mode-contracts-mode-basic).
+
 ---
 
 ### Metadata (Standard SEO Signals)
@@ -151,6 +153,8 @@ These come from the page-level `seo.metadata` fields in `seo-checks.json`. All m
 | Viewport | `metadata.hasViewport` | `<meta name="viewport">` must exist |
 | Favicon | `metadata.hasFavicon` | `<link rel="icon">` or `<link rel="shortcut icon">` must exist |
 | Max title tags | `metadata.maxTitleTags` | Only one `<title>` tag allowed |
+
+**Basic mode:** `title`, `metaDescription`, `h1`, `canonical`, `metaRobots`, and `hreflang` all support `"mode": "basic"`, which switches from exact-`value` matching to existence / minimum-length checks (no per-page value needed). This is what `npx seo-setup` → **Basic** generates. See [Basic mode contracts](./configuration.md#basic-mode-contracts-mode-basic) for the full behaviour of each check in this mode.
 
 **Common failures:**
 - Title is `undefined` or `null` — JavaScript template didn't render the head
@@ -260,6 +264,8 @@ Asserts `<link rel="alternate" hreflang="...">` tags exist with the correct URLs
   }
 }
 ```
+
+**Basic mode:** `hreflang: { "mode": "basic" }` asserts at least **two** `link[rel="alternate"][hreflang]` tags are present, instead of checking a specific lang→URL map. A valid hreflang implementation is reciprocal — the page references itself plus at least one alternate — so a single tag already means the implementation is incomplete.
 
 ---
 

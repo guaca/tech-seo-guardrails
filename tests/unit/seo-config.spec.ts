@@ -11,8 +11,33 @@ import { validateConfig } from '../../src/config-schema';
 import { resolveConfig, resolvePageConfig, samplePagesByTemplate } from '../../src/config-resolver';
 import type { ResolvedPageConfig } from '../../src/config-resolver';
 import { loadSeoConfig } from '../../src/load-config';
+import basicExampleConfig from '../../seo-checks.basic.example.json';
 
 const seoConfig = loadSeoConfig();
+
+/** Builds a minimal, valid Basic-mode config (mode: "basic" checks, no per-page seo). */
+function makeBasicConfig(overrides: { title?: any } = {}) {
+  return {
+    baseUrl: 'https://example.com',
+    contractMode: 'basic',
+    templates: {
+      all: {
+        urlPattern: '.*',
+        waitForReady: 'networkidle',
+        seo: {
+          metadata: {
+            title: { enabled: true, severity: 'warning', mode: 'basic', minLength: 10, ...overrides.title },
+            hreflang: { enabled: true, severity: 'warning', mode: 'basic' },
+          },
+        },
+      },
+    },
+    pages: [
+      { path: '/', template: 'all', description: 'Home page' },
+      { path: '/about', template: 'all', description: '/about' },
+    ],
+  };
+}
 
 test.describe('Config schema validation', () => {
 
@@ -34,38 +59,90 @@ test.describe('Config schema validation', () => {
     expect(paths.length, `Duplicate paths found`).toBe(unique.size);
   });
 
+  // Merges each page with its template (without stripping disabled checks) so
+  // template-only pages — e.g. every page in a Basic-mode contract, which never
+  // carry their own `seo` block — are evaluated correctly instead of crashing
+  // on an undefined `page.seo`.
+  function resolvedPageFor(page: (typeof seoConfig.pages)[number]) {
+    return resolvePageConfig(page as any, (seoConfig as any).templates);
+  }
+
   test('every page should have a title', () => {
     for (const page of seoConfig.pages) {
-      expect(page.seo.metadata?.title?.value, `Page "${page.path}" is missing a title`).toBeTruthy();
+      const title = resolvedPageFor(page).seo?.metadata?.title;
+      const hasTitle = !!title && (!!title.value || title.mode === 'basic');
+      expect(hasTitle, `Page "${page.path}" is missing a title`).toBe(true);
     }
   });
 
   test('every page should have a canonical URL', () => {
     for (const page of seoConfig.pages) {
-      expect(page.seo.metadata?.canonical?.value, `Page "${page.path}" is missing a canonical`).toBeTruthy();
-      // Canonical may be a relative path (e.g. "/about") or an absolute URL.
-      const canonical = page.seo.metadata.canonical.value as string;
-      const isValid = canonical.startsWith('/')
-        || (() => { try { new URL(canonical); return true; } catch { return false; } })();
-      expect(isValid, `Page "${page.path}" has invalid canonical: "${canonical}"`).toBe(true);
+      const canonical = resolvedPageFor(page).seo?.metadata?.canonical;
+      const hasCanonical = !!canonical && (!!canonical.value || canonical.mode === 'basic');
+      expect(hasCanonical, `Page "${page.path}" is missing a canonical`).toBe(true);
+      // Custom-mode canonicals carry a fixed expected value — validate its shape.
+      // Basic-mode canonicals have no fixed value (checked for existence/non-empty at runtime instead).
+      if (canonical?.value) {
+        const canonicalValue = canonical.value as string;
+        const isValid = canonicalValue.startsWith('/')
+          || (() => { try { new URL(canonicalValue); return true; } catch { return false; } })();
+        expect(isValid, `Page "${page.path}" has invalid canonical: "${canonicalValue}"`).toBe(true);
+      }
     }
   });
 
   test('every page should have metaRobots defined', () => {
     for (const page of seoConfig.pages) {
-      expect(page.seo.metadata?.metaRobots?.value !== undefined, `Page "${page.path}" is missing metaRobots`).toBe(true);
+      const metaRobots = resolvedPageFor(page).seo?.metadata?.metaRobots;
+      const hasMetaRobots = !!metaRobots && (metaRobots.value !== undefined || metaRobots.mode === 'basic');
+      expect(hasMetaRobots, `Page "${page.path}" is missing metaRobots`).toBe(true);
     }
   });
 
   test('structuredData entries should all have @type', () => {
     for (const page of seoConfig.pages) {
-      const expected = page.seo.structuredData?.expected?.value || page.seo.structuredData?.expected;
+      const structuredData = resolvedPageFor(page).seo?.structuredData;
+      const expected = structuredData?.expected?.value || structuredData?.expected;
       if (expected && Array.isArray(expected)) {
         for (const sd of expected) {
           expect(sd['@type'], `Page "${page.path}" has structuredData without @type`).toBeTruthy();
         }
       }
     }
+  });
+});
+
+test.describe('Basic mode contracts', () => {
+
+  test('a generated Basic contract should have no validation errors', () => {
+    const errors = validateConfig(basicExampleConfig);
+    if (errors.length > 0) {
+      const summary = errors.map((e) => `  ${e.path}: ${e.message}`).join('\n');
+      expect(errors, `Config validation errors:\n${summary}`).toHaveLength(0);
+    }
+  });
+
+  test('mode: "basic" checks without a per-page seo override should not trigger required-field errors', () => {
+    const errors = validateConfig(makeBasicConfig());
+    expect(errors).toHaveLength(0);
+  });
+
+  test('an unknown check mode should be rejected', () => {
+    const config = makeBasicConfig({ title: { mode: 'exotic' } });
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path.endsWith('.mode'))).toBe(true);
+  });
+
+  test('a negative minLength should be rejected', () => {
+    const config = makeBasicConfig({ title: { minLength: -5 } });
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path.endsWith('.minLength'))).toBe(true);
+  });
+
+  test('a non-integer minLength should be rejected', () => {
+    const config = makeBasicConfig({ title: { minLength: 10.5 } });
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path.endsWith('.minLength'))).toBe(true);
   });
 });
 
@@ -105,10 +182,15 @@ test.describe('Template resolution', () => {
   });
 
   test('page overrides should take precedence over template', () => {
-    const page = seoConfig.pages[0];
+    // Find a page that actually defines its own title override — template-only
+    // pages (e.g. every page in a Basic-mode contract) have nothing to test here.
+    const page = seoConfig.pages.find((p) => (p as any).seo?.metadata?.title);
+    test.skip(!page, 'No page in this config defines a per-page title override');
+    if (!page) return;
+    const pageTitle = (page as any).seo.metadata.title;
     const resolved = resolvePageConfig(page as any, (seoConfig as any).templates);
     // Page-specific title should be preserved
-    expect(resolved.seo.metadata.title?.value || resolved.seo.metadata.title).toEqual(page.seo.metadata.title?.value || page.seo.metadata.title);
+    expect(resolved.seo.metadata.title?.value || resolved.seo.metadata.title).toEqual(pageTitle?.value || pageTitle);
   });
 
   test('lane filtering should exclude non-matching checks', () => {
@@ -130,7 +212,7 @@ test.describe('Template resolution', () => {
     const resolved = resolveConfig(seoConfig as any);
     const originalPage = seoConfig.pages[0];
     const resolvedPage = resolved.find(p => p.path === originalPage.path);
-    if (originalPage.seo.renderingValidation) {
+    if (originalPage.seo?.renderingValidation) {
       expect(resolvedPage?.seo.renderingValidation).toBeTruthy();
     }
   });

@@ -16,11 +16,14 @@
     "tests/",
     "scripts/setup.js",
     "scripts/configure.js",
+    "scripts/basic-contract-wizard.js",
+    "scripts/wizard-utils.js",
     "scripts/select-tests.sh",
     "scripts/init-generator-config.py",
     "scripts/generate-from-sf.py",
     "playwright.config.js",
     "seo-checks.example.json",
+    "seo-checks.basic.example.json",
     ".env.example",
     "pages.template.csv",
     "docs/",
@@ -60,5 +63,20 @@
   },
   "peerDependencies": {
     "@playwright/test": ">=1.59.1"
-  }
+  },
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guaca/tech-seo-guardrails.git"
+  },
+  "author": "Estela Franco (https://github.com/guaca)",
+  "license": "MIT",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/guaca/tech-seo-guardrails/issues"
+  },
+  "homepage": "https://github.com/guaca/tech-seo-guardrails#readme"
 }

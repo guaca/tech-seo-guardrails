@@ -13,7 +13,7 @@ import { resolveConfig, samplePagesByTemplate } from '../../src/config-resolver'
 import { checkUrlsBatch } from '../../src/sitemap-helper';
 import { getRobots, GOOGLEBOT_UA } from '../../src/robots-helper';
 import { setupInterceptors } from '../helpers/interceptors';
-import { seoExpect, annotateSeverity, getSeverity } from '../helpers/assertions';
+import { seoExpect, annotateSeverity, getSeverity, isBasicCheck } from '../helpers/assertions';
 import { injectDeepQueryAll } from '../helpers/shadow-dom';
 import { loadSeoConfig } from '../../src/load-config';
 
@@ -329,7 +329,12 @@ for (const pageConfig of sampledPages) {
         test('[http] should not have unexpected X-Robots-Tag header', async () => {
           annotateSeverity(severity);
           const xRobotsTag = httpResponse!.headers()['x-robots-tag'];
-          if (check.value === null) {
+          if (isBasicCheck(check)) {
+            seoExpect(severity)(
+              !!xRobotsTag && /noindex/i.test(xRobotsTag),
+              `X-Robots-Tag header contains "noindex" (${xRobotsTag}) — page is not indexable`
+            ).toBe(false);
+          } else if (check.value === null) {
             seoExpect(severity)(xRobotsTag, 'X-Robots-Tag header should not be present').toBeUndefined();
           } else {
             seoExpect(severity)(xRobotsTag, `Expected X-Robots-Tag to be "${check.value}"`).toBe(check.value);
@@ -402,6 +407,17 @@ for (const pageConfig of sampledPages) {
         const severity = getSeverity(check);
         test('[metadata] should have the correct <title>', async () => {
           annotateSeverity(severity);
+          if (isBasicCheck(check)) {
+            const count = await page.locator('title').count();
+            seoExpect(severity)(count, `Expected exactly one <title> tag, found ${count}`).toBe(1);
+            const title = (await page.title()).trim();
+            const minLength = check.minLength ?? 0;
+            seoExpect(severity)(
+              title.length > minLength,
+              `<title> content is too short: "${title}" (${title.length} chars, expected > ${minLength})`
+            ).toBe(true);
+            return;
+          }
           const title = await page.title();
           seoExpect(severity)(title, `Expected title to be "${check.value}"`).toBe(check.value);
         });
@@ -428,6 +444,15 @@ for (const pageConfig of sampledPages) {
           const texts = results.map((r: any) => r.text);
           // If no H1s exist, treat the "found text" as an empty string to allow matching an expected empty config
           const actualTexts = texts.length > 0 ? texts : [""];
+          if (isBasicCheck(check)) {
+            const minLength = check.minLength ?? 0;
+            const longestText = actualTexts.reduce((a: string, b: string) => (b.length > a.length ? b : a), "");
+            seoExpect(severity)(
+              longestText.length > minLength,
+              `<h1> content is too short: "${longestText}" (${longestText.length} chars, expected > ${minLength})`
+            ).toBe(true);
+            return;
+          }
           seoExpect(severity)(actualTexts, `Expected h1 to be "${check.value}"`).toContain(check.value);
         });
       }
@@ -470,17 +495,24 @@ for (const pageConfig of sampledPages) {
         const check = meta.canonical;
         const severity = getSeverity(check);
         const resolveBase = canonicalMode === 'dynamic' ? testBaseUrl : prodBaseUrl;
-        const expectedCanonical = new URL(check.value, resolveBase).href;
+        const expectedCanonical = isBasicCheck(check) ? '' : new URL(check.value, resolveBase).href;
         // Normalize percent-encoding so that e.g. /caf%C3%A9 and /café compare equal.
         const normalize = (url: string | null) => url ? decodeURI(new URL(url).href) : url;
 
         test('[metadata] should have the correct canonical URL', async () => {
           annotateSeverity(severity);
+          if (isBasicCheck(check)) {
+            const count = await page.locator('link[rel="canonical"]').count();
+            seoExpect(severity)(count, `Expected exactly one canonical tag, found ${count}`).toBe(1);
+            const canonical = await page.locator('link[rel="canonical"]').getAttribute('href', { timeout: 500 }).catch(() => null);
+            seoExpect(severity)((canonical || '').trim().length > 0, 'Canonical tag is present but empty').toBe(true);
+            return;
+          }
           const canonical = await page.locator('link[rel="canonical"]').getAttribute('href', { timeout: 500 }).catch(() => null);
           seoExpect(severity)(normalize(canonical), `Expected canonical to be "${expectedCanonical}"`).toBe(normalize(expectedCanonical));
         });
 
-        test('[metadata] Raw HTML canonical should not point to the wrong URL (Canonical Misdirection)', async ({ request }) => {
+        if (!isBasicCheck(check)) test('[metadata] Raw HTML canonical should not point to the wrong URL (Canonical Misdirection)', async ({ request }) => {
           annotateSeverity(severity);
           const response = await request.get(`${testBaseUrl}${pageConfig.path}`);
           const rawHtml = await response.text();
@@ -516,13 +548,20 @@ for (const pageConfig of sampledPages) {
         test('[metadata] should have the correct meta robots', async () => {
           annotateSeverity(severity);
           const robots = await page.locator('meta[name="robots"]').getAttribute('content', { timeout: 500 }).catch(() => null);
+          if (isBasicCheck(check)) {
+            seoExpect(severity)(
+              !!robots && /noindex/i.test(robots),
+              `meta robots contains "noindex" (${robots}) — page is not indexable`
+            ).toBe(false);
+            return;
+          }
           const expected = check.value || null;
           const actual = robots || null;
           seoExpect(severity)(actual, `Expected meta robots to be "${expected}"`).toBe(expected);
         });
 
         const expected = check.value || null;
-        if (expected && !expected.includes('noindex')) {
+        if (isBasicCheck(check) || (expected && !expected.includes('noindex'))) {
           test('[metadata] Raw HTML should not contain a rogue noindex tag (Meta Robots Trap)', async ({ request }) => {
             annotateSeverity(severity);
             const response = await request.get(`${testBaseUrl}${pageConfig.path}`);
@@ -534,8 +573,10 @@ for (const pageConfig of sampledPages) {
             );
             
             seoExpect(severity)(
-              hasNoindex, 
-              `Found a rogue "noindex" tag in the raw server HTML. This is a Meta Robots Trap — Googlebot may drop the page before JavaScript hydration fixes it to "${expected}".`
+              hasNoindex,
+              isBasicCheck(check)
+                ? 'Found a rogue "noindex" tag in the raw server HTML. This is a Meta Robots Trap — Googlebot may drop the page before JavaScript hydration removes it.'
+                : `Found a rogue "noindex" tag in the raw server HTML. This is a Meta Robots Trap — Googlebot may drop the page before JavaScript hydration fixes it to "${expected}".`
             ).toBe(false);
           });
         }
@@ -580,6 +621,17 @@ for (const pageConfig of sampledPages) {
         const severity = getSeverity(check);
         test('[metadata] should have the correct meta description', async () => {
           annotateSeverity(severity);
+          if (isBasicCheck(check)) {
+            const count = await page.locator('meta[name="description"]').count();
+            seoExpect(severity)(count, `Expected exactly one meta description tag, found ${count}`).toBe(1);
+            const description = (await page.locator('meta[name="description"]').getAttribute('content', { timeout: 500 }).catch(() => null)) || '';
+            const minLength = check.minLength ?? 0;
+            seoExpect(severity)(
+              description.trim().length > minLength,
+              `meta description is too short: "${description}" (${description.trim().length} chars, expected > ${minLength})`
+            ).toBe(true);
+            return;
+          }
           const description = await page.locator('meta[name="description"]').getAttribute('content', { timeout: 500 }).catch(() => null);
           const expected = check.value || null;
           const actual = description || null;
@@ -752,11 +804,21 @@ for (const pageConfig of sampledPages) {
     if (pageConfig.seo.metadata) {
       const meta = pageConfig.seo.metadata;
 
-      if (meta.hreflang && meta.hreflang.enabled !== false && meta.hreflang.value) {
+      if (meta.hreflang && meta.hreflang.enabled !== false && (meta.hreflang.value || isBasicCheck(meta.hreflang))) {
         const check = meta.hreflang;
         const severity = getSeverity(check);
         test('[metadata] should have correct hreflang tags', async () => {
           annotateSeverity(severity);
+          if (isBasicCheck(check)) {
+            // A valid hreflang implementation is reciprocal: the page must reference itself
+            // plus at least one alternate — a single tag means the implementation is incomplete.
+            const count = await page.locator('link[rel="alternate"][hreflang]').count();
+            seoExpect(severity)(
+              count >= 2,
+              `Expected at least 2 hreflang tags (self + at least one alternate), found ${count}`
+            ).toBe(true);
+            return;
+          }
           const hreflangMap = check.value as Record<string, string>;
           for (const [lang, url] of Object.entries(hreflangMap)) {
             const href = await page.locator(`link[rel="alternate"][hreflang="${lang}"]`).getAttribute('href', { timeout: 500 }).catch(() => null);

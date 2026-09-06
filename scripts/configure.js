@@ -8,10 +8,11 @@ const fs = require('fs');
 const path = require('path');
 const { Select, Toggle, MultiSelect, Input } = require('enquirer');
 const pc = require('picocolors');
+const { isInstalledDependency } = require('./wizard-utils');
 
 const CWD = process.cwd();
 const PKG_ROOT = path.resolve(__dirname, '..');
-const isInstalledDep = __dirname.includes('node_modules');
+const isInstalledDep = isInstalledDependency(PKG_ROOT, CWD);
 const CONFIG_CANDIDATES = [
   path.join(CWD, 'generator-config.json'),
   path.join(CWD, 'seo-checks.json')
