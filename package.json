@@ -1,6 +1,6 @@
 {
   "name": "tech-seo-guardrails",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Scalable technical SEO guardrails for CI/CD — Playwright + Googlebot emulation",
   "main": "src/index.js",
   "bin": {
