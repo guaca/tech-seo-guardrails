@@ -54,11 +54,18 @@ const sampleLimit: number | undefined = isScheduled
   : envSampleLimit ?? (seoConfig as any).sampleConfig?.maxPagesPerTemplate;
 const sampledPages = sampleLimit ? samplePagesByTemplate(resolvedPages, sampleLimit) : resolvedPages;
 
+// Basic contracts only run the specific checks the user toggled on — these
+// site-level checks aren't among the 6 Basic checks (they're Custom-mode
+// conveniences: exact-value uniqueness comparisons, and a robots.txt check
+// nobody asked for), so they're skipped entirely for Basic contracts rather
+// than silently no-op passing (Basic checks carry no `.value` to compare).
+const isBasicContract = (seoConfig as any).contractMode === 'basic';
+
 // ============================================================
 // Site-level checks (not per-page)
 // ============================================================
 
-test.describe('Site-level SEO checks', () => {
+if (!isBasicContract) test.describe('Site-level SEO checks', () => {
   test('page sampling summary', () => {
     const byTemplate = new Map<string, { total: number; sampled: number }>();
     for (const page of resolvedPages) {
@@ -457,14 +464,16 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      test('[metadata] should have exactly one <h1>', async () => {
-        const severity = getSeverity(meta.h1);
-        annotateSeverity(severity);
-        const results = await page.evaluate(() =>
-          (window as any).deepQueryAll(document, 'h1')
-        );
-        seoExpect(severity)(results.length, 'There should be exactly one <h1> on the page').toBe(1);
-      });
+      if (meta.h1 && meta.h1.enabled !== false) {
+        test('[metadata] should have exactly one <h1>', async () => {
+          const severity = getSeverity(meta.h1);
+          annotateSeverity(severity);
+          const results = await page.evaluate(() =>
+            (window as any).deepQueryAll(document, 'h1')
+          );
+          seoExpect(severity)(results.length, 'There should be exactly one <h1> on the page').toBe(1);
+        });
+      }
 
       if (meta.h2s && meta.h2s.enabled !== false && Array.isArray(meta.h2s.value) && meta.h2s.value.length > 0) {
         const check = meta.h2s;

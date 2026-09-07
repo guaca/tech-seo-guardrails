@@ -67,7 +67,14 @@ test.describe('Config schema validation', () => {
     return resolvePageConfig(page as any, (seoConfig as any).templates);
   }
 
+  // Basic-mode contracts deliberately let each of the 6 checks be enabled
+  // independently — treating title/canonical/metaRobots as always-required
+  // "critical signals" (the Custom-mode assumption below) would contradict
+  // that design, so these sanity checks only apply to Custom contracts.
+  const isBasicContract = (seoConfig as any).contractMode === 'basic';
+
   test('every page should have a title', () => {
+    test.skip(isBasicContract, 'Basic-mode checks are independently optional by design');
     for (const page of seoConfig.pages) {
       const title = resolvedPageFor(page).seo?.metadata?.title;
       const hasTitle = !!title && (!!title.value || title.mode === 'basic');
@@ -76,6 +83,7 @@ test.describe('Config schema validation', () => {
   });
 
   test('every page should have a canonical URL', () => {
+    test.skip(isBasicContract, 'Basic-mode checks are independently optional by design');
     for (const page of seoConfig.pages) {
       const canonical = resolvedPageFor(page).seo?.metadata?.canonical;
       const hasCanonical = !!canonical && (!!canonical.value || canonical.mode === 'basic');
@@ -92,6 +100,7 @@ test.describe('Config schema validation', () => {
   });
 
   test('every page should have metaRobots defined', () => {
+    test.skip(isBasicContract, 'Basic-mode checks are independently optional by design');
     for (const page of seoConfig.pages) {
       const metaRobots = resolvedPageFor(page).seo?.metadata?.metaRobots;
       const hasMetaRobots = !!metaRobots && (metaRobots.value !== undefined || metaRobots.mode === 'basic');
