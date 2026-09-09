@@ -88,6 +88,8 @@ The wizard handles this in Step 2, starting with a choice of mode:
 
 **Basic** (recommended first step) — a minimal starter contract with no CSV crawl needed. It asks six yes/no questions covering the essentials: does every page have a title with content, a meta description with content, exactly one H1 with content, is the page indexable (no rogue `noindex` in meta robots or the `X-Robots-Tag` header), does it have reciprocal hreflang tags, and does it have a non-empty canonical. Each check is optional and has its own severity (`blocker`/`warning`) and, where relevant, a minimum character length. You choose how to list your pages — auto-crawl `sitemap.xml` (recommended), paste a list of paths, or upload a simple CSV with a URL column — no Python required. Re-run `npx seo-setup` any time to edit a Basic contract or switch to Custom.
 
+> **Running only your Basic checks:** `npx seo-test` with no `--project` flag runs the full suite, including `e2e` — which is unrelated to the 6 Basic checks and crawls your whole sitemap, so its runtime varies a lot (see [step 4](#4-start-your-dev-server-and-run-tests) below). To run just what your Basic contract defines, use `npx seo-test --project=integration`.
+
 **Custom** — full control, matching a specific expected value per page (exact title, exact canonical, exact hreflang map, etc.). Two ways to build it:
 
 - **Generate from CSV (recommended)** — place your CSV in the project folder before running the wizard. The wizard scans for it, lets you pick it, and runs the generator inline. If this is your first run, it also launches the template config wizard first (requires `pip install questionary`).
@@ -150,6 +152,8 @@ npx playwright show-report
 ```
 
 Run this as often as you like while working on a feature. When you're satisfied, commit — the same tests will run again automatically in CI.
+
+> **Basic contracts and `npx seo-test` (no `--project` flag):** the full suite also runs `e2e`, which is a separate tier unrelated to the 6 Basic checks — it crawls your whole sitemap for broken links and redirects, regardless of which Basic checks you enabled. One of its checks (`Sitemap: outbound link sampling`) renders `crawlConfig.linkSampleSize` pages in a real browser and HEAD-checks every link on each — 5 pages by default when `crawlConfig` isn't set (which is the case for every Basic contract), typically adding 10-30 seconds; raising `linkSampleSize` scales that runtime up accordingly. If you only want the checks your Basic contract actually defines, run `npx seo-test --project=integration` (or `npm run seo:test:integration` once the wizard has added the `seo:*` scripts to your `package.json`) instead of the full suite.
 
 ### 5. Testing production directly (No dev server required)
 

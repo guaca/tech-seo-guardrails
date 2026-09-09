@@ -254,6 +254,10 @@ A Basic contract also sets a top-level `"contractMode": "basic"` marker so `npx 
 
 `npx seo-configure` (the Custom check manager) is not Basic-mode-aware — use `npx seo-setup` to edit a Basic contract's checks, thresholds, or pages.
 
+**Site-level integration checks are skipped for Basic contracts.** The `robots.txt` accessibility check and the title/meta-description uniqueness checks aren't among the 6 Basic checks — and the uniqueness checks specifically compare each page's exact `value`, which Basic-mode checks never set — so they're skipped entirely rather than passing vacuously without comparing anything.
+
+**Running only your Basic checks:** `npx seo-test` with no `--project` flag also runs the `e2e` project, which is a separate tier unrelated to which of the 6 Basic checks you enabled — it always crawls the full sitemap for broken links and redirects. Its `Sitemap: outbound link sampling` check renders `crawlConfig.linkSampleSize` pages in a real browser (defaulting to 5, since Basic contracts don't set `crawlConfig`), so expect roughly 10-30 seconds for that check alone at the default sample size. To run only what your Basic contract defines, use `npx seo-test --project=integration` (or `npm run seo:test:integration` once the wizard has added the `seo:*` scripts to your `package.json`).
+
 ---
 
 ## Maintenance & Updates
