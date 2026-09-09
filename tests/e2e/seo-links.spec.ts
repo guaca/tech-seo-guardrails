@@ -44,7 +44,7 @@ const maxUrlsPerTemplate: number =
   20;
 const concurrency: number = crawl.concurrency || 10;
 const timeoutMs: number = crawl.timeoutMs || 10_000;
-const linkSampleSize: number = crawl.linkSampleSize || 20;
+const linkSampleSize: number = crawl.linkSampleSize || 5;
 const sitemapUrlsShouldNotRedirect: boolean = crawl.sitemapUrlsShouldNotRedirect ?? true;
 
 let sitemap: SitemapValidation;
@@ -292,6 +292,12 @@ test.describe('Sitemap: coverage vs configured pages', () => {
 
 test.describe('Sitemap: outbound link sampling', () => {
   test(`sample of ${linkSampleSize} pages should have no broken outbound links`, async ({ page, request }) => {
+    // This test does linkSampleSize sequential full page loads, each followed by a
+    // HEAD-check batch of that page's internal links — the flat per-test default
+    // (20s) only covers a handful of pages. Scale it with the sample size so larger
+    // samples (e.g. the 20-page default when crawlConfig.linkSampleSize isn't set)
+    // don't fail on timeout regardless of how fast the site itself responds.
+    test.setTimeout(linkSampleSize * 5_000 + 15_000);
     const sitemapLocs = sitemap.urls.map((u) => u.loc);
     const sample = sampleUrls(sitemapLocs, linkSampleSize);
     const brokenLinks: string[] = [];

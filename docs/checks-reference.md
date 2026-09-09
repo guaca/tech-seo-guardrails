@@ -512,6 +512,8 @@ Every page in `seo-checks.json` must appear in the sitemap. If a configured page
 
 Renders a sample of `crawlConfig.linkSampleSize` sitemap pages in a browser, extracts all internal links, and HEAD-requests them. Catches broken internal links across the site without a full crawl.
 
+`linkSampleSize` defaults to **5** when `crawlConfig` isn't set (e.g. every Basic-mode contract, which never writes a `crawlConfig` block). Since this check does up to `linkSampleSize` full sequential page loads, each followed by its own batch of link HEAD-requests, total runtime scales with the sample size — expect roughly 10-30 seconds at the default of 5, growing from there if you raise it. The test's own timeout scales with it too (`linkSampleSize * 5s + 15s`) so a larger sample doesn't fail on timeout by itself.
+
 ---
 
 ### Sitemap: redirect chains
