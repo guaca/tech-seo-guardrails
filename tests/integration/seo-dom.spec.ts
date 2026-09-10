@@ -647,15 +647,8 @@ for (const pageConfig of sampledPages) {
           seoExpect(severity)(actual, `Expected meta description to be "${expected}"`).toBe(expected);
         });
       }
-    }
-
-    // HTML Fundamentals ────────────────────────────────────────
-
-    if (pageConfig.seo.htmlFundamentals) {
-      const hf = pageConfig.seo.htmlFundamentals;
-
-      if (hf.hasCharset && hf.hasCharset.enabled !== false) {
-        const check = hf.hasCharset;
+      if (meta.hasCharset && meta.hasCharset.enabled !== false) {
+        const check = meta.hasCharset;
         const severity = getSeverity(check);
         test('[metadata] HTML: should have meta charset', async () => {
           annotateSeverity(severity);
@@ -664,8 +657,8 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      if (hf.hasViewport && hf.hasViewport.enabled !== false) {
-        const check = hf.hasViewport;
+      if (meta.hasViewport && meta.hasViewport.enabled !== false) {
+        const check = meta.hasViewport;
         const severity = getSeverity(check);
         test('[metadata] HTML: should have meta viewport', async () => {
           annotateSeverity(severity);
@@ -674,8 +667,8 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      if (hf.hasFavicon && hf.hasFavicon.enabled !== false) {
-        const check = hf.hasFavicon;
+      if (meta.hasFavicon && meta.hasFavicon.enabled !== false) {
+        const check = meta.hasFavicon;
         const severity = getSeverity(check);
         test('[metadata] HTML: should have a favicon', async () => {
           annotateSeverity(severity);
@@ -684,8 +677,8 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      if (hf.maxTitleTags && hf.maxTitleTags.enabled !== false) {
-        const check = hf.maxTitleTags;
+      if (meta.maxTitleTags && meta.maxTitleTags.enabled !== false) {
+        const check = meta.maxTitleTags;
         const severity = getSeverity(check);
         test('[metadata] HTML: should not have duplicate <title> tags', async () => {
           annotateSeverity(severity);
