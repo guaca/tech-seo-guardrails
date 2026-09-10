@@ -77,26 +77,32 @@ npx seo-setup
 The wizard walks you through three steps:
 
 1. **URLs** — sets `PROD_BASE_URL` and `TEST_BASE_URL` in `.env`
-2. **SEO contract** — creates `seo-checks.json` (generate from CSV or copy the example)
+2. **SEO contract** — creates `seo-checks.json`. First it asks **Basic** or **Custom** (see below)
 3. **CI/CD workflows** — optionally generates GitHub Actions workflows in `.github/workflows/` and adds `seo:*` scripts to your `package.json`
 
-Re-run `npx seo-setup` any time to update your URLs or regenerate workflows. Use `npx seo-configure` any time to toggle check groups.
+Re-run `npx seo-setup` any time to update your URLs, edit your contract, or regenerate workflows. Use `npx seo-configure` any time to toggle Custom check groups.
 
 ### 3. Create your SEO contract (`seo-checks.json`)
 
-The wizard handles this in Step 2. Two options:
+The wizard handles this in Step 2, starting with a choice of mode:
 
-**Generate from CSV (recommended)** — place your CSV in the project folder before running the wizard. The wizard scans for it, lets you pick it, and runs the generator inline. If this is your first run, it also launches the template config wizard first (requires `pip install questionary`).
+**Basic** (recommended first step) — a minimal starter contract with no CSV crawl needed. It asks six yes/no questions covering the essentials: does every page have a title with content, a meta description with content, exactly one H1 with content, is the page indexable (no rogue `noindex` in meta robots or the `X-Robots-Tag` header), does it have reciprocal hreflang tags, and does it have a non-empty canonical. Each check is optional and has its own severity (`blocker`/`warning`) and, where relevant, a minimum character length. You choose how to list your pages — auto-crawl `sitemap.xml` (recommended), paste a list of paths, or upload a simple CSV with a URL column — no Python required. Re-run `npx seo-setup` any time to edit a Basic contract or switch to Custom.
 
-CSV sources:
-- **Screaming Frog** — `Internal tab → Filter by HTML → Export`
-- **No Screaming Frog** — fill in `pages.template.csv` with your page URLs, titles, H1s, and canonicals
+> **Running only your Basic checks:** `npx seo-test` with no `--project` flag runs the full suite, including `e2e` — which is unrelated to the 6 Basic checks and crawls your whole sitemap, so its runtime varies a lot (see [step 4](#4-start-your-dev-server-and-run-tests) below). To run just what your Basic contract defines, use `npx seo-test --project=integration`.
 
-The generator only includes pages that are **indexable and return a 200 or 304 status code** — non-indexable pages (noindex, canonicalised, etc.) and error/redirect URLs are excluded by default.
+**Custom** — full control, matching a specific expected value per page (exact title, exact canonical, exact hreflang map, etc.). Two ways to build it:
 
-**Start from example JSON** — the wizard copies `seo-checks.example.json` for you to edit manually. Good for small sites or quick testing.
+- **Generate from CSV (recommended)** — place your CSV in the project folder before running the wizard. The wizard scans for it, lets you pick it, and runs the generator inline. If this is your first run, it also launches the template config wizard first (requires `pip install questionary`).
 
-See [docs/sf-generator.md](./docs/sf-generator.md) for the full CSV walkthrough and [docs/configuration.md](./docs/configuration.md) for the full field reference.
+  CSV sources:
+  - **Screaming Frog** — `Internal tab → Filter by HTML → Export`
+  - **No Screaming Frog** — fill in `pages.template.csv` with your page URLs, titles, H1s, and canonicals
+
+  The generator only includes pages that are **indexable and return a 200 or 304 status code** — non-indexable pages (noindex, canonicalised, etc.) and error/redirect URLs are excluded by default.
+
+- **Start from example JSON** — the wizard copies `seo-checks.example.json` for you to edit manually. Good for small sites or quick testing.
+
+See [docs/sf-generator.md](./docs/sf-generator.md) for the full CSV walkthrough and [docs/configuration.md](./docs/configuration.md) for the full field reference, including the Basic-mode `mode: "basic"` / `minLength` fields.
 
 ### Updating your tests as your site evolves
 
@@ -146,6 +152,8 @@ npx playwright show-report
 ```
 
 Run this as often as you like while working on a feature. When you're satisfied, commit — the same tests will run again automatically in CI.
+
+> **Basic contracts and `npx seo-test` (no `--project` flag):** the full suite also runs `e2e`, which is a separate tier unrelated to the 6 Basic checks — it crawls your whole sitemap for broken links and redirects, regardless of which Basic checks you enabled. One of its checks (`Sitemap: outbound link sampling`) renders `crawlConfig.linkSampleSize` pages in a real browser and HEAD-checks every link on each — 5 pages by default when `crawlConfig` isn't set (which is the case for every Basic contract), typically adding 10-30 seconds; raising `linkSampleSize` scales that runtime up accordingly. If you only want the checks your Basic contract actually defines, run `npx seo-test --project=integration` (or `npm run seo:test:integration` once the wizard has added the `seo:*` scripts to your `package.json`) instead of the full suite.
 
 ### 5. Testing production directly (No dev server required)
 
@@ -208,7 +216,7 @@ As this project is in **Alpha**, updates to the core logic and CI workflows are 
 
 | File | Required | Description |
 |---|---|---|
-| `seo-checks.json` | **Yes** | Your site's SEO contract — pages, expected metadata, check config. Generated automatically by the setup wizard from a CSV or copied from an example. |
+| `seo-checks.json` | **Yes** | Your site's SEO contract — pages, expected metadata, check config. Generated by the setup wizard: Basic (existence/minimum-length checks, no crawl needed) or Custom (from a CSV or the example JSON). |
 | `.env` | **Yes** | `PROD_BASE_URL` and `TEST_BASE_URL`. Created by the setup wizard. Never commit this file. |
 
 No `playwright.config.js` changes are needed — `npx seo-test` handles it.
@@ -222,8 +230,8 @@ No `playwright.config.js` changes are needed — `npx seo-test` handles it.
 | Category | Default severity | Key checks |
 |---|---|---|
 | HTTP response | warning | Status code, X-Robots-Tag, robots.txt, canonical resolution |
-| Core metadata | warning | Title, h1, canonical, meta robots, uniqueness, self-reference |
-| Meta description | warning | Exact match |
+| Core metadata | warning | Title, h1, canonical, meta robots, hreflang, uniqueness, self-reference² |
+| Meta description | warning | Exact match² |
 | Open Graph | warning | `og:title`, `og:description`, `og:type`, `og:url`, `og:image` presence |
 | Twitter Cards | warning | `twitter:card`, `twitter:title` |
 | JSON-LD | warning | Valid JSON, expected `@type`, required fields, and product price validation |
@@ -238,6 +246,7 @@ No `playwright.config.js` changes are needed — `npx seo-test` handles it.
 | Lazy content | configurable | Content visible after Googlebot viewport expansion |
 
 ¹ Rendering validation is gated to merge/scheduled lanes by default.
+² Basic-mode contracts (`npx seo-setup` → Basic) check existence and minimum length instead of an exact expected value — see [Basic mode contracts](./docs/configuration.md#basic-mode-contracts-mode-basic).
 
 ### Site-level checks (integration)
 
@@ -328,17 +337,21 @@ tests/
   integration/         # Per-page DOM checks with Googlebot emulation
   e2e/                 # Sitemap-driven URL and link health checks
   helpers/
-    assertions.ts      # seoExpect(), annotateSeverity(), getSeverity()
+    assertions.ts      # seoExpect(), annotateSeverity(), getSeverity(), isBasicCheck()
     interceptors.ts    # robots.txt enforcement, third-party blocking
     shadow-dom.ts      # deepQueryAll() — DOM traversal through open shadow roots (mirrors Googlebot)
 scripts/
   setup.js                   # Setup wizard: .env URLs, seo-checks.json, CI workflows + package.json scripts
+  basic-contract-wizard.js   # Basic mode: builds a minimal seo-checks.json (no CSV crawl needed)
+  configure.js               # Custom check/severity manager (npx seo-configure)
+  wizard-utils.js            # Shared wizard helpers (prompt styling, CSV discovery)
   select-tests.sh            # Risk-based test selection for PR lane
   init-generator-config.py   # Wizard: create generator-config.json (pip install questionary)
   generate-from-sf.py        # Generate seo-checks.json from a CSV (SF export or pages.template.csv)
 generator-config.example.json  # Template for generator-config.json
 pages.template.csv             # Blank CSV template for sites without Screaming Frog
-seo-checks.example.json        # Template — copy to seo-checks.json
+seo-checks.example.json        # Custom template — copy to seo-checks.json
+seo-checks.basic.example.json  # Basic template — what the Basic wizard generates
 playwright.config.js           # Googlebot emulation settings, project definitions
 ```
 

@@ -1,6 +1,10 @@
 .DS_Store
 node_modules/
 
+# Site-specific local config (see docs/configuration.md)
+.env
+seo-checks.json
+
 # Python bytecode and caches
 __pycache__/
 *.pyc

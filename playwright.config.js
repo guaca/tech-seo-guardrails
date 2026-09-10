@@ -53,7 +53,7 @@ module.exports = defineConfig({
   // so the page load phase has enough headroom without inflating individual test timeouts.
   timeout: 20_000,
   reporter: [
-    ['html', { open: 'never' }],
+    ['html', { open: 'never', outputFolder: path.join(process.cwd(), 'playwright-report') }],
     ['list'],
     [path.resolve(__dirname, 'src/reporters/seo-summary.js')],
   ],

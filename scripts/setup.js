@@ -9,11 +9,13 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { Select, Input, Confirm, Toggle } = require('enquirer');
 const pc = require('picocolors');
+const { print, header, promptOptions, findCsvFiles, isInstalledDependency } = require('./wizard-utils');
+const { runBasicContractWizard } = require('./basic-contract-wizard');
 
 // When run as a dependency (npx seo-setup), write to the consumer's project root.
 // When run from the cloned repo (npm run setup), __dirname/.. IS the project root.
 const PKG_ROOT = path.resolve(__dirname, '..');
-const isInstalledDep = __dirname.includes('node_modules');
+const isInstalledDep = isInstalledDependency(PKG_ROOT);
 const PROJECT_ROOT = isInstalledDep ? process.cwd() : PKG_ROOT;
 
 const ENV_PATH = path.join(PROJECT_ROOT, '.env');
@@ -22,41 +24,6 @@ const CONFIG_PATH = path.join(PROJECT_ROOT, 'seo-checks.json');
 const CONFIG_EXAMPLE_PATH = path.join(PKG_ROOT, 'seo-checks.example.json');
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
-
-function print(line) {
-  process.stdout.write((line ?? '') + '\n');
-}
-
-const DIVIDER = pc.gray('─'.repeat(62));
-
-function header(title) {
-  print('\n' + DIVIDER);
-  print('  ' + pc.bold(pc.white(title)));
-  print(DIVIDER);
-}
-
-// Custom prompt options to match the cyan/pro aesthetic
-const promptOptions = {
-  prefix: (state) => state.status === 'submitted' ? pc.cyan(pc.bold('✓')) : pc.cyan(pc.bold('?')),
-  symbols: {
-    indicator: pc.cyan(pc.bold('❯')),
-  }
-};
-
-function findCsvFiles(dir, maxDepth = 2, _depth = 0) {
-  const results = [];
-  if (_depth > maxDepth) return results;
-  const SKIP = new Set(['node_modules', '.git', 'dist', 'build', '.next', '.nuxt', 'coverage', 'vendor']);
-  let entries;
-  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return results; }
-  for (const entry of entries) {
-    if (SKIP.has(entry.name)) continue;
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) results.push(...findCsvFiles(full, maxDepth, _depth + 1));
-    else if (entry.name.toLowerCase().endsWith('.csv')) results.push(full);
-  }
-  return results;
-}
 
 function parseEnv(filePath) {
   const values = {};
@@ -224,8 +191,72 @@ async function main() {
   const existing = parseEnv(ENV_PATH);
   const exampleEnv = parseEnv(ENV_EXAMPLE_PATH);
 
-  // ── Step 1: URLs ────────────────────────────────────────────────────────────
-  header('Step 1 of 3 — URLs');
+  // ── Step 1: SEO contract mode ────────────────────────────────────────────────
+  header('Step 1 of 4 — SEO contract mode');
+  print('');
+
+  let existingParsed = null;
+  if (fs.existsSync(CONFIG_PATH)) {
+    try {
+      existingParsed = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+    } catch (err) {
+      print(`\n  ${pc.red('!')}  ${pc.yellow('Warning:')} Could not parse ${CONFIG_PATH}. Treating as missing.`);
+    }
+  }
+  const isBasicContract = existingParsed?.contractMode === 'basic';
+
+  let action;
+  if (existingParsed) {
+    const choices = isBasicContract
+      ? [
+          { name: 'edit-basic', message: 'Edit Basic contract — update checks, thresholds, or pages' },
+          { name: 'keep', message: 'Keep existing — no changes' },
+          { name: 'csv', message: 'Switch to Custom — build a full contract from a CSV crawl' },
+          { name: 'example', message: 'Reset from example JSON' }
+        ]
+      : [
+          { name: 'keep', message: 'Keep existing — preserves current pages and metadata' },
+          { name: 'csv', message: 'Regenerate from a fresh CSV crawl' },
+          { name: 'example', message: 'Reset from example JSON' }
+        ];
+    const configActionPrompt = new Select({
+      message: 'seo-checks.json already exists. What would you like to do?',
+      choices,
+      ...promptOptions
+    });
+    action = await configActionPrompt.run();
+  } else {
+    const modePrompt = new Select({
+      message: 'How would you like to configure your SEO contract?',
+      choices: [
+        { name: 'basic', message: 'Basic — a simple starter contract (title, meta description, H1, indexability, hreflang, canonical). Recommended first step.' },
+        { name: 'custom', message: 'Custom — full control, built from a Screaming Frog crawl or the example JSON.' }
+      ],
+      ...promptOptions
+    });
+    const contractMode = await modePrompt.run();
+
+    if (contractMode === 'basic') {
+      action = 'edit-basic';
+    } else {
+      const creationPrompt = new Select({
+        message: 'Choose how to create your Custom contract:',
+        choices: [
+          { name: 'csv', message: 'Generate from CSV (Recommended — builds from actual crawl data)' },
+          { name: 'example', message: 'Start from example JSON (Quick start for small sites)' }
+        ],
+        ...promptOptions
+      });
+      action = await creationPrompt.run();
+    }
+  }
+
+  // Basic has exactly one shared template ("all") — no per-template distinction —
+  // so downstream prompts (like page sampling) should not use Custom's "per template" wording.
+  const isBasicFlow = action === 'edit-basic' || (action === 'keep' && isBasicContract);
+
+  // ── Step 2: URLs ────────────────────────────────────────────────────────────
+  header('Step 2 of 4 — URLs');
   print('');
 
   const prodUrlPrompt = new Input({
@@ -237,7 +268,10 @@ async function main() {
 
   const testUrlPrompt = new Input({
     message: 'Test URL (where Playwright sends requests — press Enter to skip if only testing production)',
-    initial: existing.TEST_BASE_URL || exampleEnv.TEST_BASE_URL || 'http://localhost:3000',
+    // No placeholder fallback here: Input submits `initial` verbatim on a bare Enter,
+    // so any non-empty default (even an example placeholder) would silently defeat
+    // "press Enter to skip." Only re-offer a value the user already configured.
+    initial: existing.TEST_BASE_URL || '',
     ...promptOptions
   });
   const testUrl = await testUrlPrompt.run();
@@ -255,7 +289,9 @@ async function main() {
   const canonicalMode = await canonicalModePrompt.run();
 
   const sampleLimitPrompt = new Input({
-    message: 'Page sample limit per template (recommended: 5-10)',
+    message: isBasicFlow
+      ? 'Max pages to test per run (recommended: 5-10 — leave blank to test all pages)'
+      : 'Page sample limit per template (recommended: 5-10)',
     initial: existing.SEO_SAMPLE_LIMIT || '5',
     ...promptOptions
   });
@@ -283,37 +319,24 @@ async function main() {
 
   print(`\n  ${pc.cyan('✓')}  .env written.`);
 
-  // ── Step 2: seo-checks.json ─────────────────────────────────────────────────
-  header('Step 2 of 3 — SEO contract (seo-checks.json)');
+  // ── Step 3: Build your SEO contract ──────────────────────────────────────────
+  header('Step 3 of 4 — Build your SEO contract (seo-checks.json)');
   print('');
-
-  let action = 'keep';
-  if (fs.existsSync(CONFIG_PATH)) {
-    const configActionPrompt = new Select({
-      message: 'seo-checks.json already exists. What would you like to do?',
-      choices: [
-        { name: 'keep', message: 'Keep existing — preserves current pages and metadata' },
-        { name: 'csv', message: 'Regenerate from a fresh CSV crawl' },
-        { name: 'example', message: 'Reset from example JSON' }
-      ],
-      ...promptOptions
-    });
-    action = await configActionPrompt.run();
-  } else {
-    const creationPrompt = new Select({
-      message: 'seo-checks.json not found. Choose how to create it:',
-      choices: [
-        { name: 'csv', message: 'Generate from CSV (Recommended — builds from actual crawl data)' },
-        { name: 'example', message: 'Start from example JSON (Quick start for small sites)' }
-      ],
-      ...promptOptions
-    });
-    action = await creationPrompt.run();
-  }
 
   if (action === 'keep') {
     print(`  ${pc.cyan('✓')}  Keeping existing seo-checks.json.`);
     applyWaitForReady(waitForReady);
+  } else if (action === 'edit-basic') {
+    const written = await runBasicContractWizard({
+      projectRoot: PROJECT_ROOT,
+      pkgRoot: PKG_ROOT,
+      configPath: CONFIG_PATH,
+      prodUrl,
+      waitForReady,
+      sampleLimit,
+      existingConfig: isBasicContract ? existingParsed : null,
+    });
+    if (!written) return;
   } else if (action === 'csv') {
     const csvFiles = findCsvFiles(PROJECT_ROOT);
 
@@ -389,8 +412,8 @@ async function main() {
     }
   }
 
-  // ── Step 3: CI/CD Workflows ──────────────────────────────────────────────────
-  header('Step 3 of 3 — CI/CD Workflows');
+  // ── Step 4: CI/CD Workflows ──────────────────────────────────────────────────
+  header('Step 4 of 4 — CI/CD Workflows');
   print('');
   print('  We can generate 3 GitHub Actions workflows for continuous SEO regression testing:');
   print(`    1. ${pc.cyan('PR')}        — fast, targeted feedback when developers open Pull Requests.`);
@@ -544,14 +567,19 @@ async function main() {
   header('Setup Complete!');
   print(`\n  Your settings:`);
   print(`    PROD_BASE_URL       ${prodUrl}`);
-  print(`    TEST_BASE_URL       ${testUrl}`);
+  print(`    TEST_BASE_URL       ${testUrl || '(unset — tests run against PROD_BASE_URL)'}`);
   print(`    SEO_CANONICAL_MODE  ${canonicalMode}`);
   print(`    SEO_SAMPLE_LIMIT    ${sampleLimit || '(all pages)'}`);
   print(`    waitForReady        ${waitForReady}`);
   print(`\n  ${pc.bold('Next steps:')}`);
-  print('\n  1. Edit seo-checks.json — add paths and metadata.');
-  print(`  2. Fine-tune checks & severities: ${pc.bold(isInstalledDep ? 'npx seo-configure' : 'npm run configure')}`);
-  print(`  3. Run tests: ${pc.bold(isInstalledDep ? 'npm run seo:test' : 'npm test')}`);
+  if (isBasicFlow) {
+    print(`\n  1. Re-run ${pc.bold(isInstalledDep ? 'npx seo-setup' : 'npm run setup')} any time to edit your Basic checks, thresholds, or pages.`);
+    print(`  2. Run tests: ${pc.bold(isInstalledDep ? 'npm run seo:test' : 'npm test')}`);
+  } else {
+    print('\n  1. Edit seo-checks.json — add paths and metadata.');
+    print(`  2. Fine-tune checks & severities: ${pc.bold(isInstalledDep ? 'npx seo-configure' : 'npm run configure')}`);
+    print(`  3. Run tests: ${pc.bold(isInstalledDep ? 'npm run seo:test' : 'npm test')}`);
+  }
   print('\n  See README.md for the full reference.\n');
 }
 

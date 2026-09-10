@@ -202,6 +202,8 @@ const VALID_WAIT_STRATEGIES = ['load', 'networkidle'];
 
 const VALID_LANES = ['pr', 'merge', 'scheduled'];
 
+const VALID_CHECK_MODES = ['basic'];
+
 function validateCheckObject(
   obj: any,
   path: string,
@@ -218,6 +220,18 @@ function validateCheckObject(
     errors.push({
       path: `${path}.severity`,
       message: `Invalid severity "${obj.severity}". Must be one of: ${VALID_SEVERITIES.join(', ')}`,
+    });
+  }
+  if (obj.mode !== undefined && !VALID_CHECK_MODES.includes(obj.mode)) {
+    errors.push({
+      path: `${path}.mode`,
+      message: `Invalid mode "${obj.mode}". Must be one of: ${VALID_CHECK_MODES.join(', ')}`,
+    });
+  }
+  if (obj.minLength !== undefined && (!Number.isInteger(obj.minLength) || obj.minLength < 0)) {
+    errors.push({
+      path: `${path}.minLength`,
+      message: 'minLength must be a non-negative integer',
     });
   }
 }
