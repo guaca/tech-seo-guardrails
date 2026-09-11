@@ -337,6 +337,7 @@ for (const pageConfig of sampledPages) {
           annotateSeverity(severity);
           const xRobotsTag = httpResponse!.headers()['x-robots-tag'];
           if (isBasicCheck(check)) {
+            test.info().annotations.push({ type: 'X-Robots-Tag found', description: xRobotsTag || '(not present)' });
             seoExpect(severity)(
               !!xRobotsTag && /noindex/i.test(xRobotsTag),
               `X-Robots-Tag header contains "noindex" (${xRobotsTag}) — page is not indexable`
@@ -419,6 +420,7 @@ for (const pageConfig of sampledPages) {
             seoExpect(severity)(count, `Expected exactly one <title> tag, found ${count}`).toBe(1);
             const title = (await page.title()).trim();
             const minLength = check.minLength ?? 0;
+            test.info().annotations.push({ type: 'Title found', description: title || '(empty)' });
             seoExpect(severity)(
               title.length > minLength,
               `<title> content is too short: "${title}" (${title.length} chars, expected > ${minLength})`
@@ -454,6 +456,7 @@ for (const pageConfig of sampledPages) {
           if (isBasicCheck(check)) {
             const minLength = check.minLength ?? 0;
             const longestText = actualTexts.reduce((a: string, b: string) => (b.length > a.length ? b : a), "");
+            test.info().annotations.push({ type: 'H1 found', description: longestText || '(empty)' });
             seoExpect(severity)(
               longestText.length > minLength,
               `<h1> content is too short: "${longestText}" (${longestText.length} chars, expected > ${minLength})`
@@ -514,6 +517,7 @@ for (const pageConfig of sampledPages) {
             const count = await page.locator('link[rel="canonical"]').count();
             seoExpect(severity)(count, `Expected exactly one canonical tag, found ${count}`).toBe(1);
             const canonical = await page.locator('link[rel="canonical"]').getAttribute('href', { timeout: 500 }).catch(() => null);
+            test.info().annotations.push({ type: 'Canonical found', description: canonical || '(empty)' });
             seoExpect(severity)((canonical || '').trim().length > 0, 'Canonical tag is present but empty').toBe(true);
             return;
           }
@@ -558,6 +562,7 @@ for (const pageConfig of sampledPages) {
           annotateSeverity(severity);
           const robots = await page.locator('meta[name="robots"]').getAttribute('content', { timeout: 500 }).catch(() => null);
           if (isBasicCheck(check)) {
+            test.info().annotations.push({ type: 'Meta robots found', description: robots || '(not present)' });
             seoExpect(severity)(
               !!robots && /noindex/i.test(robots),
               `meta robots contains "noindex" (${robots}) — page is not indexable`
@@ -635,6 +640,7 @@ for (const pageConfig of sampledPages) {
             seoExpect(severity)(count, `Expected exactly one meta description tag, found ${count}`).toBe(1);
             const description = (await page.locator('meta[name="description"]').getAttribute('content', { timeout: 500 }).catch(() => null)) || '';
             const minLength = check.minLength ?? 0;
+            test.info().annotations.push({ type: 'Meta description found', description: description || '(empty)' });
             seoExpect(severity)(
               description.trim().length > minLength,
               `meta description is too short: "${description}" (${description.trim().length} chars, expected > ${minLength})`
@@ -747,10 +753,21 @@ for (const pageConfig of sampledPages) {
           if (isBasicCheck(check)) {
             // A valid hreflang implementation is reciprocal: the page must reference itself
             // plus at least one alternate — a single tag means the implementation is incomplete.
-            const count = await page.locator('link[rel="alternate"][hreflang]').count();
+            const found = await page.evaluate(() =>
+              Array.from(document.querySelectorAll('link[rel="alternate"][hreflang]')).map((el) => ({
+                lang: el.getAttribute('hreflang') || '',
+                href: el.getAttribute('href') || '',
+              }))
+            );
+            test.info().annotations.push({
+              type: 'Hreflang tags found',
+              description: found.length > 0
+                ? found.map((f) => `${f.lang} → ${f.href}`).join(' | ')
+                : '(none found)',
+            });
             seoExpect(severity)(
-              count >= 2,
-              `Expected at least 2 hreflang tags (self + at least one alternate), found ${count}`
+              found.length >= 2,
+              `Expected at least 2 hreflang tags (self + at least one alternate), found ${found.length}`
             ).toBe(true);
             return;
           }
