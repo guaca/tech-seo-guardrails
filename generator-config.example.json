@@ -42,17 +42,6 @@
           "lcpImageShouldHaveFetchPriority": { "enabled": true, "severity": "warning", "value": false },
           "lcpSrcsetShouldReturn200": { "enabled": true, "severity": "warning", "value": false }
         },
-        "ogTags": {
-          "tags": { 
-            "enabled": true, 
-            "severity": "warning", 
-            "value": {
-              "og:type": "website",
-              "og:site_name": "Your Site"
-            }
-          },
-          "requireImage": { "enabled": true, "severity": "warning", "value": true }
-        },
         "renderingValidation": {
           "noHiddenSeoContent": { "enabled": true, "severity": "blocker", "value": true },
           "noFailedRequests": { "enabled": true, "severity": "warning", "value": true },

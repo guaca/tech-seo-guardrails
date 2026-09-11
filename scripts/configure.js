@@ -72,13 +72,6 @@ const MASTER_SCHEMA = {
   contentQuality: {
     minWordCount: { default: 100, desc: 'Page must have at least this many words of visible text' }
   },
-  ogTags: {
-    tags: { default: { 'og:type': 'website' }, desc: 'Asserts specific Open Graph tags are present (requires SF custom extraction to auto-populate)' },
-    requireImage: { default: true, desc: 'Asserts og:image is present and returns a valid image (requires SF custom extraction to auto-populate)' }
-  },
-  twitterCards: {
-    tags: { default: { 'twitter:card': 'summary' }, desc: 'Asserts specific Twitter Card tags are present (requires SF custom extraction to auto-populate)' }
-  },
   structuredData: {
     expected: { default: [], desc: 'Asserts JSON-LD blocks match expected @type and required fields (requires SF structured data extraction to auto-populate)' },
     shouldBeVisibleOnPage: { default: true, desc: 'JSON-LD Product price must be visible in rendered HTML text' },

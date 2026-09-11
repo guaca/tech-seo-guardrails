@@ -15,8 +15,6 @@ Required CSV columns:
     Title 1, Meta Description 1
     H1-1, H2-1, H2-2, H2-3
     Canonical Link Element 1, Meta Robots 1
-    og:title, og:description, og:image, og:type, og:url
-    twitter:card, twitter:title, twitter:description, twitter:image
 """
 
 import argparse
@@ -81,26 +79,6 @@ COLUMN_ALIASES = {
     # Meta robots
     "meta robots 1": "meta_robots",
     "meta robots": "meta_robots",
-    # OG tags
-    "og:title": "og_title",
-    "og title": "og_title",
-    "og:description": "og_description",
-    "og description": "og_description",
-    "og:image": "og_image",
-    "og image": "og_image",
-    "og:type": "og_type",
-    "og type": "og_type",
-    "og:url": "og_url",
-    "og url": "og_url",
-    # Twitter card tags
-    "twitter:card": "twitter_card",
-    "twitter card": "twitter_card",
-    "twitter:title": "twitter_title",
-    "twitter title": "twitter_title",
-    "twitter:description": "twitter_description",
-    "twitter description": "twitter_description",
-    "twitter:image": "twitter_image",
-    "twitter image": "twitter_image",
 }
 
 
@@ -170,78 +148,6 @@ def match_template(path: str, template_order: list[str], templates_cfg: dict) ->
 def build_checks_for_template(checks_cfg: dict) -> dict:
     """Return a clean seo object in Strict Object Schema."""
     return {k: v for k, v in checks_cfg.items() if not k.startswith("_")}
-
-
-def build_og_tags(row: list[str], col_map: dict, og_cfg: dict) -> dict | None:
-    if not og_cfg:
-        return None
-
-    title = get(row, col_map, "og_title")
-    desc = get(row, col_map, "og_description")
-    image = get(row, col_map, "og_image")
-    og_type = get(row, col_map, "og_type")
-    og_url = get(row, col_map, "og_url")
-
-    tags = {}
-    if title:
-        tags["og:title"] = title
-    if desc:
-        tags["og:description"] = desc
-    if image:
-        tags["og:image"] = image
-    if og_type:
-        tags["og:type"] = og_type
-    if og_url:
-        tags["og:url"] = og_url
-
-    # Get severity from the template config (which is already in strict object schema)
-    # or fallback to "warning"
-    tags_cfg = og_cfg.get("tags", {})
-    severity = tags_cfg.get("severity", "warning")
-    tags_enabled = tags_cfg.get("enabled", False)
-    
-    # If no tags found in CSV, fallback to template value (if any)
-    if not tags:
-        tags = tags_cfg.get("value", {})
-
-    require_image_cfg = og_cfg.get("requireImage", {})
-    require_image_severity = require_image_cfg.get("severity", severity)
-    require_image_enabled = require_image_cfg.get("enabled", False)
-
-    return {
-        "tags": {"enabled": tags_enabled, "severity": severity, "value": tags},
-        "requireImage": {"enabled": require_image_enabled, "severity": require_image_severity, "value": True}
-    }
-
-
-def build_twitter_cards(row: list[str], col_map: dict, tw_cfg: dict) -> dict | None:
-    if not tw_cfg:
-        return None
-
-    card = get(row, col_map, "twitter_card")
-    title = get(row, col_map, "twitter_title")
-    desc = get(row, col_map, "twitter_description")
-    image = get(row, col_map, "twitter_image")
-
-    tags = {}
-    if card:
-        tags["twitter:card"] = card
-    if title:
-        tags["twitter:title"] = title
-    if desc:
-        tags["twitter:description"] = desc
-    if image:
-        tags["twitter:image"] = image
-
-    tags_cfg = tw_cfg.get("tags", {})
-    severity = tags_cfg.get("severity", "warning")
-    tags_enabled = tags_cfg.get("enabled", False)
-    
-    # Fallback to template value if CSV is empty
-    if not tags:
-        tags = tags_cfg.get("value", {})
-
-    return {"tags": {"enabled": tags_enabled, "severity": severity, "value": tags}}
 
 
 def build_structured_data(row: list[str], headers: list[str], sd_cfg: dict) -> dict | None:
@@ -614,18 +520,6 @@ def main():
                     "hreflang": {"enabled": hr_enabled, "severity": hr_sev, "value": None},
                 }
             }
-
-            # OG tags
-            og_cfg = template_checks.get("ogTags", {})
-            og_tags = build_og_tags(row, col_map, og_cfg)
-            if og_tags:
-                seo["ogTags"] = og_tags
-
-            # Twitter cards
-            tw_cfg = template_checks.get("twitterCards", {})
-            twitter_cards = build_twitter_cards(row, col_map, tw_cfg)
-            if twitter_cards:
-                seo["twitterCards"] = twitter_cards
 
             # Structured Data (JSON-LD)
             sd_cfg = template_checks.get("structuredData", {})

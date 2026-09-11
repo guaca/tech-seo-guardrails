@@ -75,32 +75,18 @@ In Screaming Frog, configure the crawl to collect the following before exporting
 | H1 | H1-1 |
 | Canonical | Canonical Link Element 1 |
 | Meta Robots | Meta Robots 1 |
-| Open Graph | og:title, og:description, og:image, og:type, og:url |
-| Twitter Cards | twitter:card, twitter:title, twitter:description, twitter:image |
 
 **Recommended export method:** Go to the `Internal` tab, filter by `HTML`, and click `Export` — this produces a CSV containing all the standard HTML metadata columns.
 
 **Crucial: Extraction Requirements**
-By default, Screaming Frog does not include social tags or structured data in its exports.
+By default, Screaming Frog does not include structured data in its exports.
 ## Setting up Screaming Frog for full coverage
 
-While basic SEO elements (title, meta description, H1, status code) are extracted automatically, social tags and JSON-LD must be explicitly captured so they land in the "Internal HTML" export tab.
+While basic SEO elements (title, meta description, H1, status code) are extracted automatically, JSON-LD must be explicitly captured so it lands in the "Internal HTML" export tab.
 
 ### Required Custom Extractions
 
 You must set up [Custom Extraction](https://www.screamingfrog.co.uk/seo-spider/tutorials/web-scraping/) (**Configuration > Custom > Extraction**) to collect these columns. Set the extractor type to XPath or CSS Path, and set the extraction mode to **Inner HTML** or **Text** depending on the element.
-
-**Open Graph & Twitter Cards:**
-
-- `og:title` — `//meta[@property="og:title"]/@content` (XPath, Extract: Attribute Value)
-- `og:description` — `//meta[@property="og:description"]/@content` (XPath, Extract: Attribute Value)
-- `og:image` — `//meta[@property="og:image"]/@content` (XPath, Extract: Attribute Value)
-- `og:type` — `//meta[@property="og:type"]/@content` (XPath, Extract: Attribute Value)
-- `og:url` — `//meta[@property="og:url"]/@content` (XPath, Extract: Attribute Value)
-- `twitter:card` — `//meta[@name="twitter:card"]/@content` (XPath, Extract: Attribute Value)
-- `twitter:title` — `//meta[@name="twitter:title"]/@content" (XPath, Extract: Attribute Value)
-- `twitter:description` — `//meta[@name="twitter:description"]/@content" (XPath, Extract: Attribute Value)
-- `twitter:image` — `//meta[@name="twitter:image"]/@content" (XPath, Extract: Attribute Value)
 
 **JSON-LD / Structured Data:**
 
