@@ -150,6 +150,46 @@ def build_checks_for_template(checks_cfg: dict) -> dict:
     return {k: v for k, v in checks_cfg.items() if not k.startswith("_")}
 
 
+# Screaming Frog numbers each "Extract All"-mode Custom Extraction's matches as
+# "<Name> 1", "<Name> 2", ... — one column per element found on that page, however
+# many there are. Two paired extractions (lang + url) let the generator reconstruct
+# each page's full hreflang map regardless of how many alternates it has.
+HREFLANG_LANG_RE = re.compile(r"^hreflang[\s_-]*lang\s*(\d+)$", re.IGNORECASE)
+HREFLANG_URL_RE = re.compile(r"^hreflang[\s_-]*url\s*(\d+)$", re.IGNORECASE)
+
+
+def build_hreflang(row: list[str], headers: list[str], hreflang_cfg: dict) -> dict:
+    """Builds the hreflang value by pairing 'Hreflang Lang N' / 'Hreflang URL N'
+    Custom Extraction columns by their shared index N.
+    Falls back to the template's configured value if this row has no pairs.
+    """
+    enabled = hreflang_cfg.get("enabled", False)
+    severity = hreflang_cfg.get("severity", "warning")
+
+    langs_by_index: dict[str, str] = {}
+    urls_by_index: dict[str, str] = {}
+    for i, header in enumerate(headers):
+        if i >= len(row):
+            continue
+        h = header.strip()
+        lang_match = HREFLANG_LANG_RE.match(h)
+        if lang_match:
+            langs_by_index[lang_match.group(1)] = row[i].strip()
+            continue
+        url_match = HREFLANG_URL_RE.match(h)
+        if url_match:
+            urls_by_index[url_match.group(1)] = row[i].strip()
+
+    hreflang_map: dict[str, str] = {}
+    for idx, lang in langs_by_index.items():
+        url = urls_by_index.get(idx, "")
+        if lang and url:
+            hreflang_map[lang] = url
+
+    value = hreflang_map if hreflang_map else hreflang_cfg.get("value")
+    return {"enabled": enabled, "severity": severity, "value": value}
+
+
 def build_structured_data(row: list[str], headers: list[str], sd_cfg: dict) -> dict | None:
     if not sd_cfg:
         return None
@@ -507,7 +547,6 @@ def main():
             r_enabled, r_sev = get_meta_info("metaRobots")
             d_enabled, d_sev = get_meta_info("metaDescription", "warning")
             l_enabled, l_sev = get_meta_info("links", "warning")
-            hr_enabled, hr_sev = get_meta_info("hreflang", "warning", default_enabled=False)
 
             seo: dict = {
                 "metadata": {
@@ -517,7 +556,7 @@ def main():
                     "metaRobots": {"enabled": r_enabled, "severity": r_sev, "value": meta_robots_val},
                     "metaDescription": {"enabled": d_enabled, "severity": d_sev, "value": meta_desc_val},
                     "links": {"enabled": l_enabled, "severity": l_sev, "value": []},
-                    "hreflang": {"enabled": hr_enabled, "severity": hr_sev, "value": None},
+                    "hreflang": build_hreflang(row, raw_headers, meta_cfg.get("hreflang", {})),
                 }
             }
 
