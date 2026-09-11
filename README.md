@@ -90,7 +90,7 @@ The wizard handles this in Step 2, starting with a choice of mode:
 
 > **Running only your Basic checks:** `npx seo-test` with no `--project` flag runs the full suite, including `e2e` — which is unrelated to the 6 Basic checks and crawls your whole sitemap, so its runtime varies a lot (see [step 4](#4-start-your-dev-server-and-run-tests) below). To run just what your Basic contract defines, use `npx seo-test --project=integration`.
 
-**Custom** — full control, matching a specific expected value per page (exact title, exact canonical, exact hreflang map, etc.). Two ways to build it:
+**Custom** — full control, matching a specific expected value per page (exact title, exact canonical, exact hreflang map, etc.). Re-run `npx seo-setup` any time to switch to Basic instead — it replaces your Custom contract with a fresh minimal one, so make sure that's what you want first. Two ways to build it:
 
 - **Generate from CSV (recommended)** — place your CSV in the project folder before running the wizard. The wizard scans for it, lets you pick it, and runs the generator inline. If this is your first run, it also launches the template config wizard first (requires `pip install questionary`).
 
