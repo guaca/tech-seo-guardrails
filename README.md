@@ -18,7 +18,7 @@ Playwright-based SEO regression testing — run it locally while you build, or w
 A test framework you add to any project as a dependency. It covers:
 
 - **Crawlability** — robots.txt, HTTP status codes
-- **Core metadata** — title, h1, canonical tags, meta robots, meta description, Open Graph, Twitter Cards, hreflang, JSON-LD
+- **Core metadata** — title, h1, canonical tags, meta robots, meta description, hreflang, JSON-LD
 - **Rendering quality** — Googlebot two-phase viewport expansion, hidden SEO content, thin content, TTFB
 - **Runtime health** — console errors, failed network requests, mixed content
 - **Site-wide health** — sitemap validity, broken links, redirect chains, noindex/sitemap conflicts
@@ -232,8 +232,6 @@ No `playwright.config.js` changes are needed — `npx seo-test` handles it.
 | HTTP response | warning | Status code, X-Robots-Tag, robots.txt, canonical resolution |
 | Core metadata | warning | Title, h1, canonical, meta robots, hreflang, uniqueness, self-reference² |
 | Meta description | warning | Exact match² |
-| Open Graph | warning | `og:title`, `og:description`, `og:type`, `og:url`, `og:image` presence |
-| Twitter Cards | warning | `twitter:card`, `twitter:title` |
 | JSON-LD | warning | Valid JSON, expected `@type`, required fields, and product price validation |
 | Images | warning | Alt text, dimensions, LCP image not lazy, no broken images |
 | Link health | warning | No empty/js hrefs, internal links not nofollow, noopener on external links |

@@ -166,58 +166,6 @@ These come from the page-level `seo.metadata` fields in `seo-checks.json`. All m
 
 ---
 
-### ogTags
-
-**Config key:** `seo.ogTags`
-
-Tests each key in the `tags` object against the corresponding `<meta property="og:...">` tag.
-
-Also supports `requireImage: true` to assert `og:image` is present.
-
-**Example config:**
-```json
-"ogTags": {
-  "tags": {
-    "enabled": true,
-    "severity": "warning",
-    "value": {
-      "og:title": "Page Title | Site",
-      "og:description": "Description.",
-      "og:type": "website",
-      "og:url": "https://your-site.com/"
-    }
-  },
-  "requireImage": { "enabled": true, "severity": "warning", "value": true }
-}
-```
-
-**Common failures:**
-- `og:image` missing — social platforms (Slack, LinkedIn, Twitter) won't generate a preview card
-- `og:url` has wrong base URL — often happens in staging environments if the URL is hardcoded
-
----
-
-### twitterCards
-
-**Config key:** `seo.twitterCards`
-
-Tests each key in `tags` against `<meta name="twitter:...">` values.
-
-```json
-"twitterCards": {
-  "tags": {
-    "enabled": true,
-    "severity": "warning",
-    "value": {
-      "twitter:card": "summary_large_image",
-      "twitter:title": "Page Title | Site"
-    }
-  }
-}
-```
-
----
-
 ### links
 
 **Config key:** `seo.links`

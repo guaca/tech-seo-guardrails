@@ -499,45 +499,6 @@ Mobile usability checks verify that pages meet Google's mobile-first requirement
 
 ---
 
-## `ogTags`
-
-```json
-"ogTags": {
-  "tags": {
-    "enabled": true,
-    "severity": "warning",
-    "value": {
-      "og:title": "Page Title | Site",
-      "og:description": "Description here.",
-      "og:type": "website",
-      "og:url": "/"
-    }
-  },
-  "requireImage": { "enabled": true, "severity": "warning", "value": true }
-}
-```
-
-Set `requireImage: true` to additionally assert that `og:image` is present (required by most social platforms for rich link previews).
-
----
-
-## `twitterCards`
-
-```json
-"twitterCards": {
-  "tags": {
-    "enabled": true,
-    "severity": "warning",
-    "value": {
-      "twitter:card": "summary_large_image",
-      "twitter:title": "Page Title | Site"
-    }
-  }
-}
-```
-
----
-
 ## `structuredData`
 
 ```json
