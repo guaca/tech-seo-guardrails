@@ -75,18 +75,36 @@ In Screaming Frog, configure the crawl to collect the following before exporting
 | H1 | H1-1 |
 | Canonical | Canonical Link Element 1 |
 | Meta Robots | Meta Robots 1 |
+| Hreflang | `Hreflang Lang <N>` / `Hreflang URL <N>` columns (via Custom Extraction — see below) |
 
 **Recommended export method:** Go to the `Internal` tab, filter by `HTML`, and click `Export` — this produces a CSV containing all the standard HTML metadata columns.
 
 **Crucial: Extraction Requirements**
-By default, Screaming Frog does not include structured data in its exports.
+Screaming Frog audits hreflang natively — it's a check you can enable in the crawl configuration, same as other SEO checks — but the results land in their own dedicated Hreflang tab, not in the "Internal > HTML" export this generator reads. Structured data isn't captured in that export either. For both to end up as columns in Internal > HTML, alongside title/canonical/meta robots/etc., set them up as Custom Extractions.
 ## Setting up Screaming Frog for full coverage
 
-While basic SEO elements (title, meta description, H1, status code) are extracted automatically, JSON-LD must be explicitly captured so it lands in the "Internal HTML" export tab.
+While basic SEO elements (title, meta description, H1, status code) are extracted automatically, hreflang and JSON-LD must be captured via Custom Extraction so they land in the "Internal HTML" export tab alongside everything else.
 
 ### Required Custom Extractions
 
 You must set up [Custom Extraction](https://www.screamingfrog.co.uk/seo-spider/tutorials/web-scraping/) (**Configuration > Custom > Extraction**) to collect these columns. Set the extractor type to XPath or CSS Path, and set the extraction mode to **Inner HTML** or **Text** depending on the element.
+
+**Hreflang:**
+
+Don't create one extraction per language — a page can have any number of hreflang alternates, and you shouldn't need to know all of them in advance. Instead, set up **two** Custom Extractions, both in **Extract All** mode (not "Extract First"), so Screaming Frog captures every alternate the page has:
+
+- **Name:** `Hreflang Lang`
+  **Path type:** `XPath`
+  **Path expression:** `//link[@rel="alternate"][@hreflang]/@hreflang`
+  **Extract:** `Extract Text`
+- **Name:** `Hreflang URL`
+  **Path type:** `XPath`
+  **Path expression:** `//link[@rel="alternate"][@hreflang]/@href`
+  **Extract:** `Extract Text`
+
+In Extract All mode, Screaming Frog numbers every match it finds on a page as separate columns: `Hreflang Lang 1`, `Hreflang Lang 2`, ... and `Hreflang URL 1`, `Hreflang URL 2`, ... — one pair per alternate link, however many there are (a page with 3 alternates gets 3 pairs, a page with 20 gets 20). The generator matches columns named `Hreflang Lang <N>` / `Hreflang URL <N>` (case-insensitive, `-`/`_`/space all accepted before the number) and pairs them up by their shared `N` to reconstruct each page's full `{lang: url}` map — it doesn't matter how many pairs a given page has, or that different pages have different counts.
+
+This scrapes the hreflang links the page already has, turning the check into a regression guard — if a deploy accidentally drops or changes one, the check catches it. If a page has no such columns (or they're empty), the check falls back to whatever `value` is set in `generator-config.json` for that template (`null` by default, i.e. the check stays disabled until you provide values one way or the other).
 
 **JSON-LD / Structured Data:**
 
