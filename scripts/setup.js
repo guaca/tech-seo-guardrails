@@ -217,7 +217,8 @@ async function main() {
       : [
           { name: 'keep', message: 'Keep existing — preserves current pages and metadata' },
           { name: 'csv', message: 'Regenerate from a fresh CSV crawl' },
-          { name: 'example', message: 'Reset from example JSON' }
+          { name: 'example', message: 'Reset from example JSON' },
+          { name: 'edit-basic', message: 'Switch to Basic — replace with a simple starter contract' }
         ];
     const configActionPrompt = new Select({
       message: 'seo-checks.json already exists. What would you like to do?',
