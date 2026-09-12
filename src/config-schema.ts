@@ -175,17 +175,18 @@ export function validateConfig(config: any): ValidationError[] {
       // Validate structuredData format
       if (page.seo.structuredData) {
         const sd = page.seo.structuredData;
-        if (sd.expected && Array.isArray(sd.expected)) {
-          for (let j = 0; j < sd.expected.length; j++) {
-            if (!sd.expected[j]['@type']) {
+        const entries = sd.expected?.value ?? sd.expected;
+        if (Array.isArray(entries)) {
+          for (let j = 0; j < entries.length; j++) {
+            if (!entries[j]['@type']) {
               errors.push({
-                path: `${prefix}.seo.structuredData.expected[${j}]`,
+                path: `${prefix}.seo.structuredData.expected.value[${j}]`,
                 message: 'Each structured data entry must have an @type',
               });
             }
-            if (sd.expected[j].requiredFields !== undefined && !Array.isArray(sd.expected[j].requiredFields)) {
+            if (entries[j].requiredFields !== undefined && !Array.isArray(entries[j].requiredFields)) {
               errors.push({
-                path: `${prefix}.seo.structuredData.expected[${j}].requiredFields`,
+                path: `${prefix}.seo.structuredData.expected.value[${j}].requiredFields`,
                 message: 'requiredFields must be an array of strings',
               });
             }
