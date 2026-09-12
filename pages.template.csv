@@ -1,5 +1,5 @@
-Address,Status Code,Indexability,Title 1,Meta Description 1,H1-1,H2-1,H2-2,H2-3,Canonical Link Element 1,Meta Robots 1
-https://your-site.com/,200,Indexable,Home | Your Site,Your site description,Welcome to Your Site,Featured Products,Latest News,,https://your-site.com/,index follow
-https://your-site.com/collections/shirts/,200,Indexable,Shirts | Your Site,Browse our shirt collection,Shirts,Men's Shirts,Women's Shirts,,https://your-site.com/collections/shirts/,index follow
-https://your-site.com/products/classic-tee/,200,Indexable,Classic Tee | Your Site,The classic tee you love,Classic Tee,Product Details,Sizing Guide,,https://your-site.com/products/classic-tee/,index follow
-https://your-site.com/about/,200,Indexable,About Us | Your Site,Learn about our company,About Your Site,Our Story,Our Team,,https://your-site.com/about/,index follow
+Address,Status Code,Indexability,Title 1,Meta Description 1,H1-1,Canonical Link Element 1,Meta Robots 1,Hreflang Lang 1,Hreflang URL 1,Hreflang Lang 2,Hreflang URL 2,JSON-LD
+https://your-site.com/,200,Indexable,Home | Your Site,Your site description,Welcome to Your Site,https://your-site.com/,index follow,en,https://your-site.com/,es,https://your-site.com/es/,"{""@type"": ""WebSite"", ""name"": ""Your Site"", ""url"": ""https://your-site.com/""}"
+https://your-site.com/collections/shirts/,200,Indexable,Shirts | Your Site,Browse our shirt collection,Shirts,https://your-site.com/collections/shirts/,index follow,,,,,
+https://your-site.com/products/classic-tee/,200,Indexable,Classic Tee | Your Site,The classic tee you love,Classic Tee,https://your-site.com/products/classic-tee/,index follow,,,,,
+https://your-site.com/about/,200,Indexable,About Us | Your Site,Learn about our company,About Your Site,https://your-site.com/about/,index follow,,,,,

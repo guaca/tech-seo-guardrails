@@ -132,6 +132,8 @@ cp pages.template.csv pages.csv
 # Use "200" or "304" for Status Code and "Indexable" for Indexability
 ```
 
+The template also includes example `Hreflang Lang <N>` / `Hreflang URL <N>` and `JSON-LD` columns — these follow the exact same format as the Screaming Frog Custom Extraction columns described above, since the generator reads them the same way regardless of where the CSV came from. Leave them blank for pages that don't need hreflang or structured data.
+
 ---
 
 ## Step 3 — Run the generator
