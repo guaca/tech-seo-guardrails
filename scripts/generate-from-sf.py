@@ -13,7 +13,7 @@ Usage:
 Required CSV columns:
     Address, Status Code, Indexability
     Title 1, Meta Description 1
-    H1-1, H2-1, H2-2, H2-3
+    H1-1
     Canonical Link Element 1, Meta Robots 1
 """
 
@@ -61,17 +61,6 @@ COLUMN_ALIASES = {
     "h1-1": "h1",
     "h1 1": "h1",
     "h1": "h1",
-    # H2 (up to 5)
-    "h2-1": "h2_1",
-    "h2 1": "h2_1",
-    "h2-2": "h2_2",
-    "h2 2": "h2_2",
-    "h2-3": "h2_3",
-    "h2 3": "h2_3",
-    "h2-4": "h2_4",
-    "h2 4": "h2_4",
-    "h2-5": "h2_5",
-    "h2 5": "h2_5",
     # Canonical
     "canonical link element 1": "canonical",
     "canonical link element": "canonical",
