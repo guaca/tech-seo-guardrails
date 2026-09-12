@@ -39,6 +39,27 @@ function makeBasicConfig(overrides: { title?: any } = {}) {
   };
 }
 
+/** Builds a minimal, valid Custom-mode config with a page-level structuredData override. */
+function makeStructuredDataConfig(structuredData: any) {
+  return {
+    baseUrl: 'https://example.com',
+    pages: [
+      {
+        path: '/product',
+        description: 'Product page',
+        seo: {
+          metadata: {
+            title: { enabled: true, severity: 'warning', value: 'Widget' },
+            canonical: { enabled: true, severity: 'warning', value: '/product' },
+            metaRobots: { enabled: true, severity: 'warning', value: 'index, follow' },
+          },
+          structuredData,
+        },
+      },
+    ],
+  };
+}
+
 test.describe('Config schema validation', () => {
 
   test('seo-checks.json should have no validation errors', () => {
@@ -118,6 +139,34 @@ test.describe('Config schema validation', () => {
         }
       }
     }
+  });
+
+  test('a valid structuredData.expected.value entry should pass validation', () => {
+    const config = makeStructuredDataConfig({
+      expected: { enabled: true, severity: 'warning', value: [{ '@type': 'Product', name: 'Widget' }] },
+    });
+    const errors = validateConfig(config);
+    expect(errors.filter((e) => e.path.includes('structuredData'))).toHaveLength(0);
+  });
+
+  test('a structuredData entry without @type should be rejected', () => {
+    const config = makeStructuredDataConfig({
+      expected: { enabled: true, severity: 'warning', value: [{ name: 'Widget' }] },
+    });
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path === 'pages[0].seo.structuredData.expected.value[0]')).toBe(true);
+  });
+
+  test('a structuredData entry with a non-array requiredFields should be rejected', () => {
+    const config = makeStructuredDataConfig({
+      expected: {
+        enabled: true,
+        severity: 'warning',
+        value: [{ '@type': 'Recipe', requiredFields: 'name' }],
+      },
+    });
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path === 'pages[0].seo.structuredData.expected.value[0].requiredFields')).toBe(true);
   });
 });
 

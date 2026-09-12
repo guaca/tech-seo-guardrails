@@ -76,6 +76,7 @@ In Screaming Frog, configure the crawl to collect the following before exporting
 | Canonical | Canonical Link Element 1 |
 | Meta Robots | Meta Robots 1 |
 | Hreflang | `Hreflang Lang <N>` / `Hreflang URL <N>` columns (via Custom Extraction — see below) |
+| JSON-LD / Structured Data | A column named `JSON-LD` (or `Schema` / `Structured Data`) via Custom Extraction — see below |
 
 **Recommended export method:** Go to the `Internal` tab, filter by `HTML`, and click `Export` — this produces a CSV containing all the standard HTML metadata columns.
 
@@ -91,7 +92,7 @@ You must set up [Custom Extraction](https://www.screamingfrog.co.uk/seo-spider/t
 
 **Hreflang:**
 
-Don't create one extraction per language — a page can have any number of hreflang alternates, and you shouldn't need to know all of them in advance. Instead, set up **two** Custom Extractions, both in **Extract All** mode (not "Extract First"), so Screaming Frog captures every alternate the page has:
+Don't create one extraction per language — a page can have any number of hreflang alternates, and you shouldn't need to know all of them in advance. Instead, set up **two** Custom Extractions with XPath expressions that match *every* alternate link on the page (not just one):
 
 - **Name:** `Hreflang Lang`
   **Path type:** `XPath`
@@ -102,7 +103,7 @@ Don't create one extraction per language — a page can have any number of hrefl
   **Path expression:** `//link[@rel="alternate"][@hreflang]/@href`
   **Extract:** `Extract Text`
 
-In Extract All mode, Screaming Frog numbers every match it finds on a page as separate columns: `Hreflang Lang 1`, `Hreflang Lang 2`, ... and `Hreflang URL 1`, `Hreflang URL 2`, ... — one pair per alternate link, however many there are (a page with 3 alternates gets 3 pairs, a page with 20 gets 20). The generator matches columns named `Hreflang Lang <N>` / `Hreflang URL <N>` (case-insensitive, `-`/`_`/space all accepted before the number) and pairs them up by their shared `N` to reconstruct each page's full `{lang: url}` map — it doesn't matter how many pairs a given page has, or that different pages have different counts.
+Screaming Frog automatically numbers every match it finds on a page as separate columns whenever the XPath yields more than one node: `Hreflang Lang 1`, `Hreflang Lang 2`, ... and `Hreflang URL 1`, `Hreflang URL 2`, ... — one pair per alternate link, however many there are (a page with 3 alternates gets 3 pairs, a page with 20 gets 20). The generator matches columns named `Hreflang Lang <N>` / `Hreflang URL <N>` (case-insensitive, `-`/`_`/space all accepted before the number) and pairs them up by their shared `N` to reconstruct each page's full `{lang: url}` map — it doesn't matter how many pairs a given page has, or that different pages have different counts.
 
 This scrapes the hreflang links the page already has, turning the check into a regression guard — if a deploy accidentally drops or changes one, the check catches it. If a page has no such columns (or they're empty), the check falls back to whatever `value` is set in `generator-config.json` for that template (`null` by default, i.e. the check stays disabled until you provide values one way or the other).
 
@@ -114,9 +115,9 @@ Instead, create a Custom Extraction rule:
 - **Name:** `JSON-LD` (or `Schema`, `Structured Data`)
 - **Path type:** `XPath`
 - **Path expression:** `//script[@type="application/ld+json"]`
-- **Extract:** `Inner Content` (This ensures the raw `{ ... }` JSON block is captured).
+- **Extract:** `Extract Inner HTML` (this ensures the raw `{ ... }` JSON block is captured).
 
-The generator script automatically scans columns containing the words "json", "schema", or "structured data" for valid JSON objects. If it finds a block whose `@type` matches a type you've enabled in your `generator-config.json`, it will import the exact values from the CSV into your `seo-checks.json` contract.
+If a page has more than one `<script type="application/ld+json">` block, the XPath above matches all of them and Screaming Frog numbers them as separate columns automatically: `JSON-LD 1`, `JSON-LD 2`, etc. The generator scans every column whose header contains "json-ld", "schema", or "structured data" (case-insensitive) — the word "json" alone isn't enough, it needs to be part of "json-ld" (e.g. a column named "JSON Content" won't match; use one of the recommended names above) — and each matching column, numbered or not, is checked independently for a block whose `@type` matches a type you've enabled in `generator-config.json`; every match found across all columns is imported into your `seo-checks.json` contract.
 
 If these columns are missing from your CSV, the generator will simply skip those checks or populate them with default values.
 
