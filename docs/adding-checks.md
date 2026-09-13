@@ -103,7 +103,7 @@ import { seoExpect, annotateSeverity, getSeverity } from '../helpers/assertions'
 
 | Helper | Purpose |
 |---|---|
-| `getSeverity(config)` | Reads the `severity` field from the check config object. Falls back to `"blocker"` if not set. |
+| `getSeverity(config)` | Reads the `severity` field from the check config object. Falls back to `"warning"` if not set. |
 | `annotateSeverity(severity)` | Pushes a `severity` annotation to the current test. The custom reporter uses this to group results in the SEO summary. |
 | `seoExpect(severity)` | Returns `expect` (blocker) or `expect.soft` (warning) depending on severity. |
 
