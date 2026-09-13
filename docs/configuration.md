@@ -473,20 +473,6 @@ Mobile usability checks verify that pages meet Google's mobile-first requirement
 
 ---
 
-## `contentQuality`
-
-```json
-"contentQuality": {
-  "minWordCount": { "enabled": true, "severity": "warning", "value": 100 }
-}
-```
-
-| Field | Type | Description |
-|---|---|---|
-| `minWordCount` | number | Minimum number of visible words (`body.innerText` word count). Detects thin content or rendering failures where the page text doesn't load. |
-
----
-
 ## `structuredData`
 
 ```json
@@ -560,9 +546,6 @@ Settings in `pages[].seo` are **deep-merged** over the template settings. You on
         "canonical": { "enabled": true, "severity": "blocker", "value": "/blog/my-post" },
         "metaRobots": { "enabled": true, "severity": "blocker", "value": "index, follow" },
         "metaDescription": { "enabled": true, "severity": "warning", "value": "A post about something useful." }
-      },
-      "contentQuality": {
-        "minWordCount": { "enabled": true, "severity": "warning", "value": 500 }
       }
     }
   }

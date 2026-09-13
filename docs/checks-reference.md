@@ -322,24 +322,6 @@ Verifies that pages meet Google's mobile-first usability requirements. Runs agai
 
 ---
 
-### contentQuality
-
-**Config key:** `seo.contentQuality`
-
-```json
-"contentQuality": {
-  "minWordCount": { "enabled": true, "severity": "warning", "value": 100 }
-}
-```
-
-Uses `document.body.innerText` (respects `display:none`) to count words. A page with fewer words than `minWordCount` is flagged as thin content.
-
-**Common failures:**
-- Low word count on what should be a content-rich page — likely a rendering failure (JS didn't execute, or content is in iframes)
-- Legitimately thin pages (login page, 404 page) — set `minWordCount` lower or to `null` for those pages
-
----
-
 ### structuredData
 
 **Config key:** `seo.structuredData`

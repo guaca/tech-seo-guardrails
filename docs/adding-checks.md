@@ -151,7 +151,7 @@ test.info().annotations.push({
 });
 ```
 
-Annotations appear in the Playwright HTML report under each test's detail view. They're also useful for understanding values at the boundary of pass/fail thresholds (e.g. word count).
+Annotations appear in the Playwright HTML report under each test's detail view. They're also useful for understanding values at the boundary of pass/fail thresholds (e.g. tap target size).
 
 ---
 
@@ -163,7 +163,6 @@ The test name starts with a category tag in square brackets — use this to make
 [metadata]   — page content, head tags, structured data, canonical, robots, links
 [http]       — http status, robots.txt, canonical resolution
 [rendering]  — JS rendering, DOM, console errors
-[content]    — word count, thin content
 ```
 
 For the cookie consent banner example, `[metadata]` is appropriate since it's a head/DOM concern. Use `[rendering]` if the check involves computed styles or JS-triggered behaviour.

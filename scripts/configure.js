@@ -69,9 +69,6 @@ const MASTER_SCHEMA = {
     noVhTrap: { default: true, desc: 'No element fills >= 90% of expanded viewport without max-height' },
     blockThirdParty: { default: [], desc: 'Glob patterns of third-party domains to block during testing' }
   },
-  contentQuality: {
-    minWordCount: { default: 100, desc: 'Page must have at least this many words of visible text' }
-  },
   structuredData: {
     expected: { default: [], desc: 'Asserts JSON-LD blocks match expected @type and required fields (requires SF structured data extraction to auto-populate)' },
     shouldBeVisibleOnPage: { default: true, desc: 'JSON-LD Product price must be visible in rendered HTML text' },
