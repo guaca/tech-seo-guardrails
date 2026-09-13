@@ -6,19 +6,16 @@
 
 import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
 import * as path from 'path';
+import { GOOGLEBOT_SMARTPHONE_UA } from './robots-helper';
 
 export { resolveConfig, resolvePageConfig, filterByLane, samplePagesByTemplate } from './config-resolver';
 export type { SeoConfig, PageConfig, ResolvedPageConfig, WaitForReady } from './config-resolver';
 export { validateConfig } from './config-schema';
 export type { ValidationError } from './config-schema';
 export { loadSeoConfig, getProjectRoot, getPackageRoot } from './load-config';
-export { getRobots, resetRobotsCache, GOOGLEBOT_UA } from './robots-helper';
+export { getRobots, resetRobotsCache, GOOGLEBOT_UA, GOOGLEBOT_SMARTPHONE_UA } from './robots-helper';
 export { fetchSitemap, checkUrlsBatch, sampleUrls } from './sitemap-helper';
 export type { SitemapUrl, SitemapValidation, LinkCheckResult } from './sitemap-helper';
-
-// Googlebot Smartphone user-agent (used for mobile-first indexing)
-const GOOGLEBOT_MOBILE_UA =
-  'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.69 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
 export interface SeoGuardrailOptions {
   /** URL of the site to test */
@@ -74,7 +71,7 @@ export function defineSeoConfig(options: SeoGuardrailOptions): PlaywrightTestCon
     });
   }
 
-  const botUA = options.userAgent ?? GOOGLEBOT_MOBILE_UA;
+  const botUA = options.userAgent ?? GOOGLEBOT_SMARTPHONE_UA;
   const botViewport = options.viewport ?? { width: 412, height: 732 };
   const botScaleFactor = options.deviceScaleFactor ?? 2.625;
 
@@ -117,7 +114,7 @@ export function defineSeoConfig(options: SeoGuardrailOptions): PlaywrightTestCon
     reporter: [
       ['html', { open: 'never' }],
       ['list'],
-      [path.resolve(__dirname, '..', 'src/reporters/seo-summary.ts')],
+      [path.resolve(__dirname, '..', 'src/reporters/seo-summary.js')],
     ],
     use: {
       baseURL: options.baseURL,

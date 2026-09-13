@@ -227,6 +227,46 @@ test.describe('Template resolution', () => {
     }
   });
 
+  test('cumulative fields (links, anchorTextBlocklist) should concatenate template and page values', () => {
+    const templates = {
+      other: {
+        seo: {
+          linkHealth: { links: { enabled: true, severity: 'blocker', value: [{ expectedText: 'About Us' }] } },
+          metadata: { anchorTextBlocklist: { enabled: true, severity: 'warning', value: ['click here'] } },
+        },
+      },
+    };
+    const page = {
+      path: '/x',
+      template: 'other',
+      description: 'x',
+      seo: {
+        linkHealth: { links: { value: [{ expectedText: 'Contact' }] } },
+        metadata: { anchorTextBlocklist: { value: ['read more'] } },
+      },
+    };
+    const resolved = resolvePageConfig(page as any, templates as any);
+    expect(resolved.seo.linkHealth.links.value).toEqual([
+      { expectedText: 'About Us' },
+      { expectedText: 'Contact' },
+    ]);
+    expect(resolved.seo.metadata.anchorTextBlocklist.value).toEqual(['click here', 'read more']);
+  });
+
+  test('an empty page-level cumulative value should not wipe out the template value', () => {
+    const templates = {
+      other: { seo: { linkHealth: { links: { enabled: true, severity: 'blocker', value: [{ expectedText: 'About Us' }] } } } },
+    };
+    const page = {
+      path: '/x',
+      template: 'other',
+      description: 'x',
+      seo: { linkHealth: { links: { enabled: true, severity: 'blocker', value: [] } } },
+    };
+    const resolved = resolvePageConfig(page as any, templates as any);
+    expect(resolved.seo.linkHealth.links.value).toEqual([{ expectedText: 'About Us' }]);
+  });
+
   test('template defaults should be merged into page config', () => {
     const resolved = resolveConfig(seoConfig as any);
     for (const page of resolved) {

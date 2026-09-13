@@ -19,7 +19,7 @@ A test framework you add to any project as a dependency. It covers:
 
 - **Crawlability** — robots.txt, HTTP status codes
 - **Core metadata** — title, h1, canonical tags, meta robots, meta description, hreflang, JSON-LD
-- **Rendering quality** — Googlebot two-phase viewport expansion, hidden SEO content, thin content, TTFB
+- **Rendering quality** — Googlebot two-phase viewport expansion, hidden SEO content, thin content
 - **Runtime health** — console errors, failed network requests, mixed content
 - **Site-wide health** — sitemap validity, broken links, redirect chains, noindex/sitemap conflicts
 
@@ -239,7 +239,6 @@ No `playwright.config.js` changes are needed — `npx seo-test` handles it.
 | HTML fundamentals | warning | charset, viewport, favicon, single `<title>` |
 | Rendering validation | blocker¹ | Hidden SEO content, console errors, failed requests, mixed content |
 | Mobile usability | warning | Tap target size, font size minimum |
-| Server response | warning | TTFB |
 | Content quality | warning | Minimum word count |
 | Lazy content | configurable | Content visible after Googlebot viewport expansion |
 

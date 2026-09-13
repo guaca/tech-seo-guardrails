@@ -11,7 +11,7 @@
 import { test, expect, type Response, type Page, type BrowserContext } from '@playwright/test';
 import { resolveConfig, samplePagesByTemplate } from '../../src/config-resolver';
 import { checkUrlsBatch } from '../../src/sitemap-helper';
-import { getRobots, GOOGLEBOT_UA } from '../../src/robots-helper';
+import { getRobots, GOOGLEBOT_UA, GOOGLEBOT_SMARTPHONE_UA } from '../../src/robots-helper';
 import { setupInterceptors } from '../helpers/interceptors';
 import { seoExpect, annotateSeverity, getSeverity, isBasicCheck } from '../helpers/assertions';
 import { injectDeepQueryAll } from '../helpers/shadow-dom';
@@ -19,7 +19,7 @@ import { loadSeoConfig } from '../../src/load-config';
 
 // Googlebot Smartphone context options — must match the integration project's `use` in playwright.config.js
 const GOOGLEBOT_CONTEXT_OPTIONS = {
-  userAgent: GOOGLEBOT_UA,
+  userAgent: GOOGLEBOT_SMARTPHONE_UA,
   viewport: { width: 412, height: 732 },
   deviceScaleFactor: 2.625,
   isMobile: true,
@@ -580,12 +580,16 @@ for (const pageConfig of sampledPages) {
             annotateSeverity(severity);
             const response = await request.get(`${testBaseUrl}${pageConfig.path}`);
             const rawHtml = await response.text();
-            
+
             const metaTags = rawHtml.match(/<meta[^>]+>/ig) || [];
-            const hasNoindex = metaTags.some(tag => 
-              /name=["']robots["']/i.test(tag) && /content=["'][^"']*noindex[^"']*["']/i.test(tag)
-            );
-            
+            const robotsTags = metaTags.filter(tag => /name=["']robots["']/i.test(tag));
+            const hasNoindex = robotsTags.some(tag => /content=["'][^"']*noindex[^"']*["']/i.test(tag));
+
+            test.info().annotations.push({
+              type: 'Raw meta robots found',
+              description: robotsTags.length > 0 ? robotsTags.join(' | ') : '(not present in raw HTML)',
+            });
+
             seoExpect(severity)(
               hasNoindex,
               isBasicCheck(check)
@@ -1344,28 +1348,6 @@ for (const pageConfig of sampledPages) {
           `Mixed content detected — HTTP resources on HTTPS page:\n${mixedContentUrls.join('\n')}`,
         ).toHaveLength(0);
       });
-    }
-
-    // ----------------------------------------------------------
-    // Server Response (TTFB)
-    // ----------------------------------------------------------
-
-    if (pageConfig.seo.serverResponse) {
-      const sr = pageConfig.seo.serverResponse;
-
-      if (sr.maxTTFB && sr.maxTTFB.enabled !== false) {
-        const check = sr.maxTTFB;
-        const severity = getSeverity(check);
-        test('[rendering] Server Response: TTFB should be within threshold', async () => {
-          annotateSeverity(severity);
-          const ttfb = await page.evaluate(() => {
-            const navEntry = performance.getEntriesByType('navigation')[0] as any;
-            return Math.round(navEntry?.finalResponseHeadersStart ?? navEntry?.responseStart ?? 0);
-          });
-          test.info().annotations.push({ type: 'TTFB', description: `${ttfb}ms` });
-          seoExpect(severity)(ttfb, `TTFB: ${ttfb}ms exceeds ${check.value}ms`).toBeLessThanOrEqual(check.value);
-        });
-      }
     }
 
     // ----------------------------------------------------------

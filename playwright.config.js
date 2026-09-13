@@ -28,13 +28,11 @@ if (!process.env.PLAYWRIGHT_BLOB_OUTPUT_DIR) {
 }
 
 // Googlebot Smartphone user-agent (used for mobile-first indexing)
-// Source: https://developers.google.com/search/docs/crawling-indexing/overview-google-crawlers
-const GOOGLEBOT_MOBILE_UA =
-  'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.69 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+const { GOOGLEBOT_SMARTPHONE_UA } = require('./src/robots-helper');
 
 const googlebotUse = {
   channel: 'chrome',
-  userAgent: GOOGLEBOT_MOBILE_UA,
+  userAgent: GOOGLEBOT_SMARTPHONE_UA,
   // Phase 1 viewport: Googlebot first renders at standard mobile size,
   // then the beforeEach in seo-dom.spec.ts expands it to the full scrollHeight.
   viewport: { width: 412, height: 732 },

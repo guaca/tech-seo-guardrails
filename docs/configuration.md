@@ -487,20 +487,6 @@ Mobile usability checks verify that pages meet Google's mobile-first requirement
 
 ---
 
-## `serverResponse`
-
-```json
-"serverResponse": {
-  "maxTTFB": { "enabled": true, "severity": "blocker", "value": 800 }
-}
-```
-
-| Field | Type | Description |
-|---|---|---|
-| `maxTTFB` | number | Maximum Time to First Byte in milliseconds. Measured using the browser's `PerformanceNavigationTiming` API. Google uses TTFB as a signal for server health. |
-
----
-
 ## `structuredData`
 
 ```json

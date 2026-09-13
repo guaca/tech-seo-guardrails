@@ -168,7 +168,7 @@ These come from the page-level `seo.metadata` fields in `seo-checks.json`. All m
 
 ### links
 
-**Config key:** `seo.links`
+**Config key:** `seo.linkHealth.links`
 
 Asserts that specific links are visible on the page. Each entry requires at least one of:
 
@@ -195,7 +195,7 @@ Both can be combined: `selector` scopes the search, `expectedText` is then also 
 
 ### hreflang
 
-**Config key:** `seo.hreflang`
+**Config key:** `seo.metadata.hreflang`
 
 Asserts `<link rel="alternate" hreflang="...">` tags exist with the correct URLs.
 
@@ -337,24 +337,6 @@ Uses `document.body.innerText` (respects `display:none`) to count words. A page 
 **Common failures:**
 - Low word count on what should be a content-rich page — likely a rendering failure (JS didn't execute, or content is in iframes)
 - Legitimately thin pages (login page, 404 page) — set `minWordCount` lower or to `null` for those pages
-
----
-
-### serverResponse
-
-**Config key:** `seo.serverResponse`
-
-Measures TTFB using `PerformanceNavigationTiming.finalResponseHeadersStart` (falling back to `responseStart`).
-
-```json
-"serverResponse": {
-  "maxTTFB": { "enabled": true, "severity": "blocker", "value": 800 }
-}
-```
-
-**Common failures:**
-- TTFB > 800ms consistently — your origin server or database is slow; consider caching
-- TTFB spikes on first request, then fast — cold-start behaviour (serverless functions, unwarmed caches)
 
 ---
 
