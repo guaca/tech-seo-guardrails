@@ -162,7 +162,7 @@ The test name starts with a category tag in square brackets — use this to make
 ```
 [metadata]   — page content, head tags, structured data, canonical, robots, links
 [http]       — http status, robots.txt, canonical resolution
-[rendering]  — JS rendering, TTFB, DOM, console errors
+[rendering]  — JS rendering, DOM, console errors
 [content]    — word count, thin content
 ```
 

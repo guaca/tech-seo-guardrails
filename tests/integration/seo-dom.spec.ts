@@ -1347,28 +1347,6 @@ for (const pageConfig of sampledPages) {
     }
 
     // ----------------------------------------------------------
-    // Server Response (TTFB)
-    // ----------------------------------------------------------
-
-    if (pageConfig.seo.serverResponse) {
-      const sr = pageConfig.seo.serverResponse;
-
-      if (sr.maxTTFB && sr.maxTTFB.enabled !== false) {
-        const check = sr.maxTTFB;
-        const severity = getSeverity(check);
-        test('[rendering] Server Response: TTFB should be within threshold', async () => {
-          annotateSeverity(severity);
-          const ttfb = await page.evaluate(() => {
-            const navEntry = performance.getEntriesByType('navigation')[0] as any;
-            return Math.round(navEntry?.finalResponseHeadersStart ?? navEntry?.responseStart ?? 0);
-          });
-          test.info().annotations.push({ type: 'TTFB', description: `${ttfb}ms` });
-          seoExpect(severity)(ttfb, `TTFB: ${ttfb}ms exceeds ${check.value}ms`).toBeLessThanOrEqual(check.value);
-        });
-      }
-    }
-
-    // ----------------------------------------------------------
     // Lazy Content
     // ----------------------------------------------------------
 

@@ -340,24 +340,6 @@ Uses `document.body.innerText` (respects `display:none`) to count words. A page 
 
 ---
 
-### serverResponse
-
-**Config key:** `seo.serverResponse`
-
-Measures TTFB using `PerformanceNavigationTiming.finalResponseHeadersStart` (falling back to `responseStart`).
-
-```json
-"serverResponse": {
-  "maxTTFB": { "enabled": true, "severity": "blocker", "value": 800 }
-}
-```
-
-**Common failures:**
-- TTFB > 800ms consistently — your origin server or database is slow; consider caching
-- TTFB spikes on first request, then fast — cold-start behaviour (serverless functions, unwarmed caches)
-
----
-
 ### structuredData
 
 **Config key:** `seo.structuredData`
