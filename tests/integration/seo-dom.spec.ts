@@ -580,12 +580,16 @@ for (const pageConfig of sampledPages) {
             annotateSeverity(severity);
             const response = await request.get(`${testBaseUrl}${pageConfig.path}`);
             const rawHtml = await response.text();
-            
+
             const metaTags = rawHtml.match(/<meta[^>]+>/ig) || [];
-            const hasNoindex = metaTags.some(tag => 
-              /name=["']robots["']/i.test(tag) && /content=["'][^"']*noindex[^"']*["']/i.test(tag)
-            );
-            
+            const robotsTags = metaTags.filter(tag => /name=["']robots["']/i.test(tag));
+            const hasNoindex = robotsTags.some(tag => /content=["'][^"']*noindex[^"']*["']/i.test(tag));
+
+            test.info().annotations.push({
+              type: 'Raw meta robots found',
+              description: robotsTags.length > 0 ? robotsTags.join(' | ') : '(not present in raw HTML)',
+            });
+
             seoExpect(severity)(
               hasNoindex,
               isBasicCheck(check)
