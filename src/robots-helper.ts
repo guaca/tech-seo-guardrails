@@ -7,7 +7,15 @@
 
 import robotsParser from 'robots-parser';
 
+// Short token used to match `User-agent:` directives in robots.txt — NOT a browser
+// User-Agent header. For the actual browser context, use GOOGLEBOT_SMARTPHONE_UA.
 export const GOOGLEBOT_UA = 'Googlebot';
+
+// Full Googlebot Smartphone User-Agent string (mobile-first indexing), for the
+// browser context's real HTTP User-Agent header.
+// Source: https://developers.google.com/search/docs/crawling-indexing/overview-google-crawlers
+export const GOOGLEBOT_SMARTPHONE_UA =
+  'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.6778.69 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
 const _robotsCache = new Map<string, ReturnType<typeof robotsParser> | null>();
 

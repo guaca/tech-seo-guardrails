@@ -11,7 +11,7 @@
 import { test, expect, type Response, type Page, type BrowserContext } from '@playwright/test';
 import { resolveConfig, samplePagesByTemplate } from '../../src/config-resolver';
 import { checkUrlsBatch } from '../../src/sitemap-helper';
-import { getRobots, GOOGLEBOT_UA } from '../../src/robots-helper';
+import { getRobots, GOOGLEBOT_UA, GOOGLEBOT_SMARTPHONE_UA } from '../../src/robots-helper';
 import { setupInterceptors } from '../helpers/interceptors';
 import { seoExpect, annotateSeverity, getSeverity, isBasicCheck } from '../helpers/assertions';
 import { injectDeepQueryAll } from '../helpers/shadow-dom';
@@ -19,7 +19,7 @@ import { loadSeoConfig } from '../../src/load-config';
 
 // Googlebot Smartphone context options — must match the integration project's `use` in playwright.config.js
 const GOOGLEBOT_CONTEXT_OPTIONS = {
-  userAgent: GOOGLEBOT_UA,
+  userAgent: GOOGLEBOT_SMARTPHONE_UA,
   viewport: { width: 412, height: 732 },
   deviceScaleFactor: 2.625,
   isMobile: true,
