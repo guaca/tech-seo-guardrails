@@ -58,14 +58,20 @@ function deepEqual(a: unknown, b: unknown): boolean {
 
 /**
  * Deep-merge two objects. Page values take precedence over template values.
- * Arrays are replaced by default, except for specific "cumulative" fields
- * like 'links' or 'anchorTextBlocklist' which are concatenated.
+ * Arrays are replaced by default, except for the `value` array of specific
+ * "cumulative" fields ('links', 'anchorTextBlocklist') which is concatenated.
+ *
+ * Cumulative fields are always wrapped in the Strict Object Schema
+ * (`{ enabled, severity, value: [...] }`), so the array itself only appears
+ * one level below the field name — `cumulative` tracks that we're inside
+ * such a field so the nested `value` array concatenates instead of replacing.
  */
-function deepMerge(base: Record<string, any>, override: Record<string, any>): Record<string, any> {
+function deepMerge(base: Record<string, any>, override: Record<string, any>, cumulative = false): Record<string, any> {
   const result = { ...base };
   const cumulativeFields = ['links', 'anchorTextBlocklist'];
 
   for (const key of Object.keys(override)) {
+    const isCumulativeField = cumulativeFields.includes(key);
     if (
       override[key] !== null &&
       typeof override[key] === 'object' &&
@@ -74,8 +80,12 @@ function deepMerge(base: Record<string, any>, override: Record<string, any>): Re
       !Array.isArray(result[key]) &&
       result[key] !== null
     ) {
-      result[key] = deepMerge(result[key], override[key]);
-    } else if (Array.isArray(override[key]) && Array.isArray(result[key]) && cumulativeFields.includes(key)) {
+      result[key] = deepMerge(result[key], override[key], cumulative || isCumulativeField);
+    } else if (
+      Array.isArray(override[key]) &&
+      Array.isArray(result[key]) &&
+      (isCumulativeField || (cumulative && key === 'value'))
+    ) {
       // For cumulative fields, concatenate arrays and remove duplicates via deep equality
       const merged = [...result[key]];
       for (const item of override[key]) {
