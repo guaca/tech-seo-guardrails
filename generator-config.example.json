@@ -32,7 +32,6 @@
           "maxCanonicalTags": { "enabled": true, "severity": "blocker", "value": 1 },
           "maxRobotsTags": { "enabled": true, "severity": "blocker", "value": 1 },
           "selfReferencingCanonical": { "enabled": true, "severity": "blocker", "value": true },
-          "links": { "enabled": true, "severity": "blocker", "value": [] },
           "hreflang": { "enabled": false, "severity": "blocker", "value": null }
         },
         "images": {

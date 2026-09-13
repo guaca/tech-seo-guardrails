@@ -489,31 +489,6 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      if (meta.h2s && meta.h2s.enabled !== false && Array.isArray(meta.h2s.value) && meta.h2s.value.length > 0) {
-        const check = meta.h2s;
-        const severity = getSeverity(check);
-        test('[metadata] should have the expected <h2> elements', async () => {
-          annotateSeverity(severity);
-          const results = await page.evaluate(() =>
-            (window as any).deepQueryAll(document, 'h2').map((r: any) => ({
-              text: (r.element.textContent || '').trim(),
-              inShadow: r.inShadow,
-              hostTag: r.hostTag,
-            }))
-          );
-          if (results.some((r: any) => r.inShadow)) {
-            test.info().annotations.push({
-              type: 'Shadow DOM',
-              description: `h2(s) found inside shadow root (host: ${results.find((r: any) => r.inShadow)?.hostTag})`,
-            });
-          }
-          const h2Texts = results.map((r: any) => r.text);
-          for (const expectedH2 of check.value as string[]) {
-            seoExpect(severity)(h2Texts, `Missing <h2> "${expectedH2}"`).toContain(expectedH2);
-          }
-        });
-      }
-
       if (meta.canonical && meta.canonical.enabled !== false) {
         const check = meta.canonical;
         const severity = getSeverity(check);
@@ -668,16 +643,6 @@ for (const pageConfig of sampledPages) {
           seoExpect(severity)(actual, `Expected meta description to be "${expected}"`).toBe(expected);
         });
       }
-      if (meta.hasCharset && meta.hasCharset.enabled !== false) {
-        const check = meta.hasCharset;
-        const severity = getSeverity(check);
-        test('[metadata] HTML: should have meta charset', async () => {
-          annotateSeverity(severity);
-          const count = await page.locator('meta[charset]').count();
-          seoExpect(severity)(count, 'Missing <meta charset>').toBeGreaterThan(0);
-        });
-      }
-
       if (meta.hasViewport && meta.hasViewport.enabled !== false) {
         const check = meta.hasViewport;
         const severity = getSeverity(check);
@@ -1157,41 +1122,6 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      if (lh.externalLinksHaveNoopener && lh.externalLinksHaveNoopener.enabled !== false) {
-        const check = lh.externalLinksHaveNoopener;
-        const severity = getSeverity(check);
-        test('[metadata] Links: external target="_blank" should have rel="noopener"', async () => {
-          annotateSeverity(severity);
-          const unsafeExternals = await page.evaluate((baseUrl) => {
-            const origin = new URL(baseUrl).origin;
-            return (window as any).deepQueryAll(document, 'a[target="_blank"]')
-              .filter((r: any) => {
-                const href = r.element.getAttribute('href') || '';
-                const isExternal = href.startsWith('http') && !href.startsWith(origin);
-                const rel = (r.element.getAttribute('rel') || '').toLowerCase();
-                return isExternal && !rel.includes('noopener');
-              })
-              .map((r: any) => r.element.getAttribute('href'));
-          }, prodBaseUrl);
-          seoExpect(severity)(unsafeExternals).toHaveLength(0);
-        });
-      }
-
-      if (lh.anchorTextBlocklist?.enabled !== false && Array.isArray(lh.anchorTextBlocklist?.value) && lh.anchorTextBlocklist.value.length > 0) {
-        const check = lh.anchorTextBlocklist;
-        const severity = getSeverity(check);
-        test('[metadata] Links: should not use generic anchor text', async () => {
-          annotateSeverity(severity);
-          const blocklist = (check.value as string[]).map((t: string) => t.toLowerCase());
-          const genericLinks = await page.evaluate((bl: string[]) =>
-            (window as any).deepQueryAll(document, 'a')
-              .filter((r: any) => bl.includes((r.element.textContent || '').trim().toLowerCase()))
-              .map((r: any) => `"${(r.element.textContent || '').trim()}" → ${r.element.getAttribute('href')}`)
-          , blocklist);
-          seoExpect(severity)(genericLinks).toHaveLength(0);
-        });
-      }
-
       if (lh.checkBrokenInternalLinks && lh.checkBrokenInternalLinks.enabled !== false) {
         const check = lh.checkBrokenInternalLinks;
         const severity = getSeverity(check);
@@ -1227,26 +1157,6 @@ for (const pageConfig of sampledPages) {
         });
       }
 
-      if (lh.links && lh.links.enabled !== false && Array.isArray(lh.links.value) && lh.links.value.length > 0) {
-        const check = lh.links;
-        const severity = getSeverity(check);
-        for (const link of check.value) {
-          const label = link.expectedText || link.selector;
-          test(`[metadata] should have link: "${label}"`, async () => {
-            annotateSeverity(severity);
-            let element;
-            if (link.selector) {
-              element = page.locator(link.selector).first();
-            } else {
-              element = page.getByRole('link', { name: link.expectedText, exact: true });
-            }
-            await expect(element).toBeVisible();
-            if (link.selector && link.expectedText) {
-              await expect(element).toHaveText(link.expectedText);
-            }
-          });
-        }
-      }
     }
 
     // ── [rendering] ───────────────────────────────────────────

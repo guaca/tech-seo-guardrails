@@ -119,7 +119,7 @@ The conventional template structure is:
     "seo": {
       "metadata": {
         "title": { "enabled": true, "severity": "blocker", "value": "Home | Site Name" },
-        "hasCharset": { "enabled": true, "severity": "warning", "value": true }
+        "hasViewport": { "enabled": true, "severity": "warning", "value": true }
       }
     }
   },
@@ -292,12 +292,10 @@ Fundamental SEO signals and HTML structural tags.
 "metadata": {
   "title": { "enabled": true, "severity": "blocker", "value": "Page Title" },
   "h1": { "enabled": true, "severity": "blocker", "value": "Main Heading" },
-  "h2s": { "enabled": true, "severity": "warning", "value": ["Subheading 1", "Subheading 2"] },
   "metaDescription": { "enabled": true, "severity": "warning", "value": "Description here." },
   "canonical": { "enabled": true, "severity": "blocker", "value": "/path" },
   "metaRobots": { "enabled": true, "severity": "blocker", "value": "index, follow" },
   "hreflang": { "enabled": true, "severity": "blocker", "value": { "en": "/" } },
-  "hasCharset": { "enabled": true, "severity": "warning", "value": true },
   "hasViewport": { "enabled": true, "severity": "blocker", "value": true },
   "hasFavicon": { "enabled": true, "severity": "warning", "value": true },
   "maxTitleTags": { "enabled": true, "severity": "blocker", "value": 1 }
@@ -308,12 +306,10 @@ Fundamental SEO signals and HTML structural tags.
 |---|---|---|
 | `title` | string | Expected `<title>` text. |
 | `h1` | string | Expected `<h1>` text. |
-| `h2s` | string[] | Expected `<h2>` texts (all must be present; order doesn't matter). |
 | `metaDescription` | string | Expected meta description. |
 | `canonical` | string | Expected canonical URL. Can be a relative path (`"/about"`) or an absolute URL. Relative paths are resolved against `PROD_BASE_URL` at runtime. |
 | `metaRobots` | string | Expected `<meta name="robots" content="...">` value. |
 | `hreflang` | object \| null | Hreflang map `{ "en": "https://...", "es": "https://..." }`. Set `null` to skip. |
-| `hasCharset` | boolean | Assert `<meta charset>` is present. |
 | `hasViewport` | boolean | Assert `<meta name="viewport">` is present. |
 | `hasFavicon` | boolean | Assert a favicon link tag is present. |
 | `maxTitleTags` | number | Maximum number of `<title>` tags allowed. Use `1`. |
@@ -375,9 +371,7 @@ HTTP response checks. Run on every page via a HEAD/GET request.
   "noEmptyHrefs": { "enabled": true, "severity": "warning", "value": true },
   "noJavascriptHrefs": { "enabled": true, "severity": "warning", "value": true },
   "internalLinksNoCrawlBlock": { "enabled": true, "severity": "warning", "value": true },
-  "externalLinksHaveNoopener": { "enabled": true, "severity": "warning", "value": true },
-  "checkBrokenInternalLinks": { "enabled": false, "severity": "warning", "value": false },
-  "anchorTextBlocklist": { "enabled": true, "severity": "warning", "value": ["click here"] }
+  "checkBrokenInternalLinks": { "enabled": false, "severity": "warning", "value": false }
 }
 ```
 
@@ -386,30 +380,7 @@ HTTP response checks. Run on every page via a HEAD/GET request.
 | `noEmptyHrefs` | boolean | Assert no links have `href=""` or `href="#"`. |
 | `noJavascriptHrefs` | boolean | Assert no links have `href="javascript:..."`. |
 | `internalLinksNoCrawlBlock` | boolean | Assert internal links do not have `rel="nofollow"`. |
-| `externalLinksHaveNoopener` | boolean | Assert external links that open in a new tab (`target="_blank"`) have `rel="noopener"`. |
 | `checkBrokenInternalLinks` | boolean | HEAD-request all internal links on the page and fail if any return 4xx/5xx. **Warning:** this can be slow on pages with many links. Disabled by default. |
-| `anchorTextBlocklist` | string[] | Fail if any link uses one of these exact anchor text strings (case-insensitive). Use to catch vague text like `"click here"`, `"read more"`. |
-| `links` | array | List of specific critical links that must be visible on the page. Each entry requires `expectedText` and/or `selector`. |
-
-### Specific link entry format
-
-Each entry in the `links.value` array needs at least one of `expectedText` or `selector` (both can be combined).
-
-```json
-"links": {
-  "enabled": true,
-  "severity": "blocker",
-  "value": [
-    { "expectedText": "About Us" },
-    { "selector": ".footer a", "expectedText": "Privacy Policy" }
-  ]
-}
-```
-
-| Field | Required | Description |
-|---|---|---|
-| `expectedText` | one of the two | Finds the link by visible text using `getByRole('link', { name })`. Preferred: resilient to URL and class changes. |
-| `selector` | one of the two | CSS selector — use when you need to scope to a container or the text alone is ambiguous. When both are set, `selector` locates the element and `expectedText` is also asserted on it. |
 
 ---
 

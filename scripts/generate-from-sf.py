@@ -536,12 +536,6 @@ def main():
             r_enabled, r_sev = get_meta_info("metaRobots")
             d_enabled, d_sev = get_meta_info("metaDescription", "warning")
 
-            # "links" lives under linkHealth (not metadata) in the Strict Object Schema —
-            # matches the runtime engine, config-schema validator, and documentation.
-            links_cfg = template_checks.get("linkHealth", {}).get("links", {})
-            l_enabled = links_cfg.get("enabled", False)
-            l_sev = links_cfg.get("severity", "warning")
-
             seo: dict = {
                 "metadata": {
                     "title": {"enabled": t_enabled, "severity": t_sev, "value": title_val},
@@ -550,9 +544,6 @@ def main():
                     "metaRobots": {"enabled": r_enabled, "severity": r_sev, "value": meta_robots_val},
                     "metaDescription": {"enabled": d_enabled, "severity": d_sev, "value": meta_desc_val},
                     "hreflang": build_hreflang(row, raw_headers, meta_cfg.get("hreflang", {})),
-                },
-                "linkHealth": {
-                    "links": {"enabled": l_enabled, "severity": l_sev, "value": []},
                 },
             }
 

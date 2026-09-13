@@ -30,7 +30,6 @@ const MASTER_SCHEMA = {
     maxRobotsTags: { default: 1, desc: 'Page must not have more than this many meta robots tags' },
     selfReferencingCanonical: { default: true, desc: 'Canonical href must equal the current page URL' },
     hreflang: { default: null, desc: 'Asserts hreflang tags exist with the correct URLs' },
-    hasCharset: { default: true, desc: 'Page must have <meta charset>' },
     hasViewport: { default: true, desc: 'Page must have <meta name="viewport">' },
     hasFavicon: { default: true, desc: 'Page must have a favicon' },
     maxTitleTags: { default: 1, desc: 'Page must not have multiple <title> tags' }
@@ -53,10 +52,7 @@ const MASTER_SCHEMA = {
     noEmptyHrefs: { default: true, desc: 'Links must not have empty or # href attributes' },
     noJavascriptHrefs: { default: true, desc: 'Links must not use javascript: hrefs' },
     internalLinksNoCrawlBlock: { default: true, desc: 'Internal links must not have rel="nofollow"' },
-    externalLinksHaveNoopener: { default: true, desc: 'External target="_blank" links must have rel="noopener"' },
-    checkBrokenInternalLinks: { default: false, desc: 'HEAD-requests all internal links to catch broken links' },
-    anchorTextBlocklist: { default: ['click here'], desc: 'Links must not use generic text like "click here"' },
-    links: { default: [], desc: 'Asserts that specific critical links are visible on the page' }
+    checkBrokenInternalLinks: { default: false, desc: 'HEAD-requests all internal links to catch broken links' }
   },
   headingHierarchy: {
     noSkippedLevels: { default: true, desc: 'No jump larger than 1 heading level (e.g., H1 to H3)' },

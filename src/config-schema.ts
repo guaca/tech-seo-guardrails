@@ -179,20 +179,6 @@ export function validateConfig(config: any): ValidationError[] {
 
       validateSeverities(page.seo, `${prefix}.seo`, errors);
 
-      // Validate links format
-      if (page.seo.linkHealth?.links && Array.isArray(page.seo.linkHealth.links.value)) {
-        const links = page.seo.linkHealth.links.value;
-        for (let j = 0; j < links.length; j++) {
-          const link = links[j];
-          if (!link.selector && !link.expectedText) {
-            errors.push({
-              path: `${prefix}.seo.linkHealth.links.value[${j}]`,
-              message: 'Each link entry must have either "selector" or "expectedText" (or both)',
-            });
-          }
-        }
-      }
-
       // Validate structuredData format
       if (page.seo.structuredData) {
         const sd = page.seo.structuredData;
