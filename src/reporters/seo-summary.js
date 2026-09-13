@@ -45,11 +45,17 @@ class SeoSummaryReporter {
   onEnd(_result) {
     const blockers = this.results.filter((r) => r.severity === 'blocker');
     const warnings = this.results.filter((r) => r.severity === 'warning');
+    // Tests with no severity annotation — unit config-validation and e2e sitemap/link
+    // checks never call annotateSeverity() since they're structural pass/fail checks,
+    // not per-page checks with a configurable severity. Treated as blocking below:
+    // an unclassified failure (a broken seo-checks.json, a broken sitemap) is never
+    // something that should be silently swallowed by the merge gate.
     const others = this.results.filter((r) => r.severity === 'unknown');
 
     const blockersFailed = blockers.filter((r) => r.status === 'failed');
     const warningsFailed = warnings.filter((r) => r.status === 'failed');
-    
+    const othersFailed = others.filter((r) => r.status === 'failed');
+
     const blockersSkipped = blockers.filter((r) => r.status === 'skipped');
     const warningsSkipped = warnings.filter((r) => r.status === 'skipped');
     const othersSkipped = others.filter((r) => r.status === 'skipped');
@@ -74,6 +80,15 @@ class SeoSummaryReporter {
       lines.push('');
     }
 
+    if (othersFailed.length > 0) {
+      lines.push('## Other failures (build-breaking)', '');
+      for (const r of othersFailed) {
+        lines.push(`- **FAIL** ${r.title}`);
+        if (r.error) lines.push(`  > ${r.error}`);
+      }
+      lines.push('');
+    }
+
     if (warningsFailed.length > 0) {
       lines.push('## Warnings (non-blocking)', '');
       for (const r of warningsFailed) {
@@ -83,12 +98,16 @@ class SeoSummaryReporter {
       lines.push('');
     }
 
-    const hasBlockerFailures = blockersFailed.length > 0;
+    // Unclassified failures (unit config validation, e2e sitemap/link checks) are
+    // structural, not per-page severity judgment calls — they block the same as
+    // a graded blocker so the merge gate (which reads `blockers` below) can't miss them.
+    const totalBlockingFailures = blockersFailed.length + othersFailed.length;
+    const hasBlockerFailures = totalBlockingFailures > 0;
     lines.push(
       '---',
       '',
       hasBlockerFailures
-        ? `**Result: FAILED** — ${blockersFailed.length} blocker(s) must be fixed before merging.`
+        ? `**Result: FAILED** — ${totalBlockingFailures} blocking failure(s) must be fixed before merging.`
         : warningsFailed.length > 0
           ? `**Result: PASSED with warnings** — ${warningsFailed.length} warning(s) should be reviewed.`
           : '**Result: ALL PASSED**',
@@ -104,7 +123,12 @@ class SeoSummaryReporter {
 
       const resultPath = this.outputPath.replace(/\.md$/, '.json');
       const resultData = {
-        blockers: blockersFailed.length,
+        // `blockers` is what the CI merge gate checks (`blockers > 0` fails the build) —
+        // it includes both graded blocker-severity checks and unclassified structural
+        // failures (see `others` above), so neither can slip past the gate unnoticed.
+        blockers: totalBlockingFailures,
+        gradedBlockers: blockersFailed.length,
+        otherFailures: othersFailed.length,
         warnings: warningsFailed.length,
         total: this.results.length,
         status: hasBlockerFailures ? 'FAILED' : 'PASSED',

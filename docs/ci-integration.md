@@ -257,7 +257,7 @@ The PR workflow's merge gate works like this:
 After shards complete, the merge-reports job combines blob reports and runs the custom reporter (`src/reporters/seo-summary.ts`), which writes two files:
 
 - **`test-results/seo-summary.md`** — human-readable report posted as a PR comment. Groups results into Blockers (hard failures) and Warnings (soft failures).
-- **`test-results/seo-summary.json`** — machine-readable result for CI consumption: `{ "blockers": N, "warnings": N, "total": N, "status": "FAILED"|"PASSED" }`. The merge gate reads this instead of grepping the markdown, making it immune to formatting changes.
+- **`test-results/seo-summary.json`** — machine-readable result for CI consumption: `{ "blockers": N, "gradedBlockers": N, "otherFailures": N, "warnings": N, "total": N, "status": "FAILED"|"PASSED" }`. The merge gate reads `blockers` instead of grepping the markdown, making it immune to formatting changes. `blockers` counts both graded blocker-severity check failures (`gradedBlockers`) and unclassified structural failures (`otherFailures`) — unit config-validation tests and e2e sitemap/link checks never carry a per-check severity, so a broken `seo-checks.json` or a broken sitemap still fails the gate instead of being silently ignored.
 
 Both files are uploaded as artifacts (retained for 14 days on PR runs, 30 days on weekly runs).
 

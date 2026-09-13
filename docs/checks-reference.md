@@ -369,16 +369,23 @@ Two main check groups:
 
 **Config key:** `seo.lazyContent`
 
-Tests that `IntersectionObserver`-triggered content is visible after the two-phase viewport expansion. If the element doesn't appear, it means Googlebot won't see it.
+Auto-detects `IntersectionObserver`-triggered content by comparing the page's visible text before and after Googlebot's two-phase viewport expansion — no CSS selector needed, since a single hardcoded selector can't generalize across pages that each lazy-load different content in different places. If no new content appears after expansion, it means Googlebot likely won't see whatever was supposed to load.
 
 ```json
 "lazyContent": {
-  "selector": { "enabled": true, "severity": "blocker", "value": "[data-testid='lazy-section']" },
-  "expectedText": { "enabled": true, "severity": "blocker", "value": "This content requires scrolling" }
+  "minNewWords": { "enabled": true, "severity": "warning", "value": 5 },
+  "expectedText": { "enabled": true, "severity": "warning", "value": "This content requires scrolling" }
 }
 ```
 
-Use this to explicitly test pages that use lazy-loading for content that matters for SEO (e.g., product descriptions loaded on scroll, FAQ sections).
+| Field | Description |
+|---|---|
+| `minNewWords` | Minimum number of new words that must appear in `document.body.innerText` after viewport expansion, compared to before. Defaults to `1` (any detectable new content). |
+| `expectedText` | Optional. Asserts specific text appears somewhere on the page after expansion — useful to confirm a known piece of lazy content actually rendered, without needing to know where. |
+
+Enable this on templates/pages you know use lazy-loading for SEO-relevant content (e.g., product descriptions loaded on scroll, FAQ sections). Leave it disabled on pages with no lazy-loaded content — there's nothing to detect, so a passing result there wouldn't tell you anything.
+
+**Migrating from the old `selector`-based config:** earlier versions required a hardcoded CSS `selector` per page, which broke by construction the moment it was enabled without one. If your `seo-checks.json` still has `lazyContent.selector`, it's now silently ignored — replace it with `minNewWords`.
 
 ---
 
