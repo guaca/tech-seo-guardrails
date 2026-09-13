@@ -527,6 +527,20 @@ If your page contains `Product` schema, the framework can additionally validate 
 
 ## `lazyContent`
 
+```json
+"lazyContent": {
+  "minNewWords": { "enabled": true, "severity": "warning", "value": 5 },
+  "expectedText": { "enabled": true, "severity": "warning", "value": "This content requires scrolling" }
+}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `minNewWords` | number | Auto-detected — no selector needed. Minimum number of new words that must appear in `document.body.innerText` after Googlebot's two-phase viewport expansion, compared to before. Defaults to `1`. |
+| `expectedText` | string | Optional. Asserts specific text appears somewhere on the page after viewport expansion. |
+
+A single hardcoded CSS selector can't generalize across pages that each lazy-load different content, so this check diffs visible page text before/after expansion instead of targeting a specific element.
+
 ---
 
 ## Template inheritance and per-page overrides

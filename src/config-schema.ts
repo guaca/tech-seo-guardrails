@@ -15,6 +15,26 @@ const REQUIRED_PAGE_FIELDS = ['path', 'description'];
 const REQUIRED_FIELDS = ['title', 'canonical', 'metaRobots'];
 
 /**
+ * lazyContent.minNewWords is auto-detected (diffed before/after viewport expansion,
+ * no selector), but a negative threshold would be nonsensical. Checked at both
+ * template and page level since either can define lazyContent.
+ */
+function validateLazyContent(seo: any, prefix: string, errors: ValidationError[]): void {
+  const minNewWords = seo?.lazyContent?.minNewWords;
+  if (
+    minNewWords &&
+    minNewWords.enabled !== false &&
+    minNewWords.value !== undefined &&
+    (!Number.isInteger(minNewWords.value) || minNewWords.value < 0)
+  ) {
+    errors.push({
+      path: `${prefix}.lazyContent.minNewWords`,
+      message: 'lazyContent.minNewWords must be a non-negative integer',
+    });
+  }
+}
+
+/**
  * Validates the full seo-checks.json config.
  */
 export function validateConfig(config: any): ValidationError[] {
@@ -68,6 +88,7 @@ export function validateConfig(config: any): ValidationError[] {
         errors.push({ path: `templates.${name}`, message: 'Template must have an seo object' });
       }
       validateSeverities(template.seo || {}, `templates.${name}.seo`, errors);
+      validateLazyContent(template.seo, `templates.${name}.seo`, errors);
       if (template.waitForReady && !VALID_WAIT_STRATEGIES.includes(template.waitForReady)) {
         errors.push({
           path: `templates.${name}.waitForReady`,
@@ -193,6 +214,8 @@ export function validateConfig(config: any): ValidationError[] {
           }
         }
       }
+
+      validateLazyContent(page.seo, `${prefix}.seo`, errors);
     }
   }
 

@@ -168,6 +168,43 @@ test.describe('Config schema validation', () => {
     const errors = validateConfig(config);
     expect(errors.some((e) => e.path === 'pages[0].seo.structuredData.expected.value[0].requiredFields')).toBe(true);
   });
+
+  test('an enabled lazyContent.minNewWords with a non-negative value should pass validation', () => {
+    const config = {
+      baseUrl: 'https://example.com',
+      templates: {
+        all: {
+          urlPattern: '.*',
+          seo: { lazyContent: { minNewWords: { enabled: true, severity: 'warning', value: 5 } } },
+        },
+      },
+      pages: [{ path: '/', template: 'all', description: 'Home' }],
+    };
+    const errors = validateConfig(config);
+    expect(errors.filter((e) => e.path.includes('lazyContent'))).toHaveLength(0);
+  });
+
+  test('an enabled lazyContent.minNewWords with a negative value should be rejected at template level', () => {
+    const config = {
+      baseUrl: 'https://example.com',
+      templates: {
+        all: {
+          urlPattern: '.*',
+          seo: { lazyContent: { minNewWords: { enabled: true, severity: 'warning', value: -1 } } },
+        },
+      },
+      pages: [{ path: '/', template: 'all', description: 'Home' }],
+    };
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path === 'templates.all.seo.lazyContent.minNewWords')).toBe(true);
+  });
+
+  test('an enabled lazyContent.minNewWords with a non-integer value should be rejected at page level', () => {
+    const config = makeStructuredDataConfig(undefined);
+    (config.pages[0].seo as any).lazyContent = { minNewWords: { enabled: true, severity: 'warning', value: 1.5 } };
+    const errors = validateConfig(config);
+    expect(errors.some((e) => e.path === 'pages[0].seo.lazyContent.minNewWords')).toBe(true);
+  });
 });
 
 test.describe('Basic mode contracts', () => {

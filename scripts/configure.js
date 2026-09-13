@@ -79,8 +79,8 @@ const MASTER_SCHEMA = {
     minFontSizePx: { default: 12, desc: 'Visible text must have computed font size >= this many px' }
   },
   lazyContent: {
-    selector: { default: '', desc: 'CSS selector for lazy-loaded element that must be visible after scrolling' },
-    expectedText: { default: '', desc: 'Text that must be inside the lazy-loaded element' }
+    minNewWords: { default: 1, desc: 'Auto-detected: minimum new words that must appear after Googlebot\'s viewport expansion (no selector needed)' },
+    expectedText: { default: '', desc: 'Optional: specific text that must appear somewhere on the page after viewport expansion' }
   }
 };
 

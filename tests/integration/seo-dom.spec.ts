@@ -155,6 +155,11 @@ for (const pageConfig of sampledPages) {
     let viewportPhase1: { scrollHeight: number; bodyScrollHeight: number; innerHeight: number } | null = null;
     let viewportPhase2: { scrollHeight: number; innerHeight: number } | null = null;
     let viewportExpandedHeight = 0;
+    // Word counts of visible body text before/after viewport expansion — the diff is how
+    // lazyContent auto-detects IntersectionObserver-triggered content, with no selector needed.
+    let lazyWordsBefore = 0;
+    let lazyWordsAfter = 0;
+    let lazyTextAfter = '';
     // Shared page — created once in beforeAll, reused by all tests in this describe block.
     // fullyParallel: false on the integration project ensures a single worker, so beforeAll
     // runs once per describe block and `page` is consistent across all tests.
@@ -260,8 +265,10 @@ for (const pageConfig of sampledPages) {
         scrollHeight: document.documentElement.scrollHeight,
         bodyScrollHeight: document.body.scrollHeight,
         innerHeight: window.innerHeight,
+        wordCount: (document.body.innerText || '').trim().split(/\s+/).filter((w) => w.length > 0).length,
       }));
       viewportPhase1 = phase1;
+      lazyWordsBefore = phase1.wordCount;
 
       // Phase 2: expand viewport to full document height (mirrors Googlebot's expansion)
       viewportExpandedHeight = Math.max(phase1.scrollHeight, phase1.bodyScrollHeight);
@@ -270,10 +277,14 @@ for (const pageConfig of sampledPages) {
       // Wait one animation frame: vh units recalculate, IntersectionObservers fire
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
 
-      viewportPhase2 = await page.evaluate(() => ({
+      const phase2 = await page.evaluate(() => ({
         scrollHeight: document.documentElement.scrollHeight,
         innerHeight: window.innerHeight,
+        text: document.body.innerText || '',
       }));
+      viewportPhase2 = { scrollHeight: phase2.scrollHeight, innerHeight: phase2.innerHeight };
+      lazyTextAfter = phase2.text;
+      lazyWordsAfter = phase2.text.trim().split(/\s+/).filter((w) => w.length > 0).length;
     });
 
     // Attach viewport annotations to each test's report entry (no navigation — data already captured above).
@@ -1356,30 +1367,37 @@ for (const pageConfig of sampledPages) {
 
     if (pageConfig.seo.lazyContent) {
       const lazy = pageConfig.seo.lazyContent;
-      
-      // If lazyContent is enabled, it should have a selector
-      if (lazy.selector && lazy.selector.enabled !== false) {
-        const check = lazy.selector;
+
+      // Auto-detects lazy-loaded content by diffing visible body text before vs. after
+      // Googlebot's viewport expansion — no selector needed, since a fixed selector can't
+      // generalize across pages that each lazy-load different content in different places.
+      if (lazy.minNewWords && lazy.minNewWords.enabled !== false) {
+        const check = lazy.minNewWords;
         const severity = getSeverity(check);
-        test('[rendering] Lazy content should be visible in viewport', async () => {
+        const minNewWords = typeof check.value === 'number' ? check.value : 1;
+
+        test('[rendering] Lazy-loaded content should render within Googlebot\'s viewport expansion', async () => {
           annotateSeverity(severity);
-          
-          const element = page.locator(check.value);
-          const count = await element.count();
-          const isViewportTest = pageConfig.path.includes('viewport-test');
-          const errorMsg = isViewportTest
-            ? `Lazy-loaded content not found at selector "${check.value}". Content that requires viewport proximity to trigger (IntersectionObserver-based lazy loading) may not render within Googlebot's expanded viewport.`
-            : `Lazy-loaded content not found at selector "${check.value}"`;
-          
-          seoExpect(severity)(count, errorMsg).toBeGreaterThan(0);
-          
-          if (count > 0 && lazy.expectedText && lazy.expectedText.enabled !== false) {
-            const textCheck = lazy.expectedText;
-            const text = await element.textContent();
-            seoExpect(getSeverity(textCheck))(text, 
-              `Lazy content text mismatch. Expected to contain: "${textCheck.value}"`
-            ).toContain(textCheck.value);
-          }
+          const newWords = Math.max(0, lazyWordsAfter - lazyWordsBefore);
+          test.info().annotations.push({
+            type: 'Lazy content detected',
+            description: `${lazyWordsBefore} words before expansion → ${lazyWordsAfter} words after (+${newWords})`,
+          });
+          seoExpect(severity)(
+            newWords,
+            `No new content appeared after Googlebot's viewport expansion (expected at least ${minNewWords} new word(s)) — lazy-loaded content may not be rendering for Googlebot.`,
+          ).toBeGreaterThanOrEqual(minNewWords);
+        });
+      }
+
+      if (lazy.expectedText && lazy.expectedText.enabled !== false) {
+        const textCheck = lazy.expectedText;
+        test('[rendering] Lazy-loaded content should contain expected text', async () => {
+          annotateSeverity(getSeverity(textCheck));
+          seoExpect(getSeverity(textCheck))(
+            lazyTextAfter,
+            `Expected text not found anywhere on the page after viewport expansion: "${textCheck.value}"`,
+          ).toContain(textCheck.value);
         });
       }
     }
