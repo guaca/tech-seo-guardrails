@@ -168,7 +168,7 @@ These come from the page-level `seo.metadata` fields in `seo-checks.json`. All m
 
 ### links
 
-**Config key:** `seo.links`
+**Config key:** `seo.linkHealth.links`
 
 Asserts that specific links are visible on the page. Each entry requires at least one of:
 
@@ -195,7 +195,7 @@ Both can be combined: `selector` scopes the search, `expectedText` is then also 
 
 ### hreflang
 
-**Config key:** `seo.hreflang`
+**Config key:** `seo.metadata.hreflang`
 
 Asserts `<link rel="alternate" hreflang="...">` tags exist with the correct URLs.
 
