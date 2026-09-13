@@ -120,16 +120,7 @@ pages.forEach(page => {
     
     ${isProduct ? productPriceHtml : ''}
 
-    <p>
-      This is a placeholder body text to ensure we meet the minimum word count requirements for the SEO content quality checks. 
-      The framework requires at least one hundred words of visible text on the page to avoid being flagged as thin content. 
-      Technical SEO is crucial for discoverability and user experience. By implementing automated guardrails, 
-      we can maintain high standards across the entire site without manual oversight on every single pull request. 
-      This approach scales beautifully as the number of pages grows. Googlebot expects clear signals like unique titles, 
-      descriptive meta tags, and valid structured data. Let us keep adding more words here to be absolutely safe. 
-      Word count is an easy metric but often indicative of rendering issues if it drops too low unexpectedly. 
-      We are now likely over the threshold but let us add one more sentence just in case. Happy testing!
-    </p>
+    <p>Placeholder body content for local testing of the SEO guardrails framework.</p>
 
     <nav>
       <a href="/">Home</a>

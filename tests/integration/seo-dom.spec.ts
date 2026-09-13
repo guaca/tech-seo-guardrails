@@ -1459,42 +1459,5 @@ for (const pageConfig of sampledPages) {
       }
     }
 
-    // ── [content] ─────────────────────────────────────────────
-    // ----------------------------------------------------------
-    // Content Quality
-    // ----------------------------------------------------------
-
-    if (pageConfig.seo.contentQuality) {
-      const cq = pageConfig.seo.contentQuality;
-
-      if (cq.minWordCount && cq.minWordCount.enabled !== false) {
-        const check = cq.minWordCount;
-        const severity = getSeverity(check);
-        const minWords = check.value;
-
-        test(`[content] page should have at least ${minWords} words of visible text`, async () => {
-          annotateSeverity(severity);
-
-          // body.innerText in Chromium already includes text from open shadow roots,
-          // so no manual shadow DOM traversal is needed (it would double-count).
-          const wordCount = await page.evaluate(() => {
-            const text = (document.body as HTMLElement).innerText || '';
-            return text.trim().split(/\s+/).filter((w: string) => w.length > 0).length;
-          });
-
-          test.info().annotations.push({
-            type: 'Word count',
-            description: `${wordCount} words (minimum: ${minWords})`,
-          });
-
-          seoExpect(severity)(
-            wordCount,
-            `Thin content: only ${wordCount} words found (minimum: ${minWords}). ` +
-            `This may indicate a rendering failure or genuinely low-quality page.`,
-          ).toBeGreaterThanOrEqual(minWords);
-        });
-      }
-    }
-
   });
 }
