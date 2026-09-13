@@ -34,44 +34,13 @@ export interface ResolvedPageConfig extends PageConfig {
 }
 
 /**
- * Stable deep-equal check for two values (primitives, plain objects, arrays).
- * Used by deepMerge to deduplicate cumulative arrays without JSON round-tripping.
+ * Deep-merge two objects. Page values take precedence over template values;
+ * arrays are replaced rather than merged.
  */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null || typeof a !== typeof b) return false;
-  if (Array.isArray(a)) {
-    if (!Array.isArray(b) || a.length !== b.length) return false;
-    return a.every((val, i) => deepEqual(val, b[i]));
-  }
-  if (typeof a === 'object') {
-    const aKeys = Object.keys(a as Record<string, unknown>);
-    const bKeys = Object.keys(b as Record<string, unknown>);
-    if (aKeys.length !== bKeys.length) return false;
-    return aKeys.every(
-      (key) => Object.prototype.hasOwnProperty.call(b, key) &&
-        deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key]),
-    );
-  }
-  return false;
-}
-
-/**
- * Deep-merge two objects. Page values take precedence over template values.
- * Arrays are replaced by default, except for the `value` array of specific
- * "cumulative" fields ('links', 'anchorTextBlocklist') which is concatenated.
- *
- * Cumulative fields are always wrapped in the Strict Object Schema
- * (`{ enabled, severity, value: [...] }`), so the array itself only appears
- * one level below the field name — `cumulative` tracks that we're inside
- * such a field so the nested `value` array concatenates instead of replacing.
- */
-function deepMerge(base: Record<string, any>, override: Record<string, any>, cumulative = false): Record<string, any> {
+function deepMerge(base: Record<string, any>, override: Record<string, any>): Record<string, any> {
   const result = { ...base };
-  const cumulativeFields = ['links', 'anchorTextBlocklist'];
 
   for (const key of Object.keys(override)) {
-    const isCumulativeField = cumulativeFields.includes(key);
     if (
       override[key] !== null &&
       typeof override[key] === 'object' &&
@@ -80,20 +49,7 @@ function deepMerge(base: Record<string, any>, override: Record<string, any>, cum
       !Array.isArray(result[key]) &&
       result[key] !== null
     ) {
-      result[key] = deepMerge(result[key], override[key], cumulative || isCumulativeField);
-    } else if (
-      Array.isArray(override[key]) &&
-      Array.isArray(result[key]) &&
-      (isCumulativeField || (cumulative && key === 'value'))
-    ) {
-      // For cumulative fields, concatenate arrays and remove duplicates via deep equality
-      const merged = [...result[key]];
-      for (const item of override[key]) {
-        if (!merged.some((existing) => deepEqual(existing, item))) {
-          merged.push(item);
-        }
-      }
-      result[key] = merged;
+      result[key] = deepMerge(result[key], override[key]);
     } else {
       result[key] = override[key];
     }

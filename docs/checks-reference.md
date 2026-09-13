@@ -149,7 +149,6 @@ These come from the page-level `seo.metadata` fields in `seo-checks.json`. All m
 | No duplicate robots meta | `maxRobotsTags: 1` | Count of `<meta name="robots">` must not exceed limit |
 | Correct meta description | `metadata.metaDescription` | Exact match (severity: warning) |
 | Hreflang cluster | `metadata.hreflang` | Asserts hreflang tags exist with the correct URLs |
-| meta charset | `metadata.hasCharset` | `<meta charset="">` exists |
 | Viewport | `metadata.hasViewport` | `<meta name="viewport">` must exist |
 | Favicon | `metadata.hasFavicon` | `<link rel="icon">` or `<link rel="shortcut icon">` must exist |
 | Max title tags | `metadata.maxTitleTags` | Only one `<title>` tag allowed |
@@ -163,33 +162,6 @@ These come from the page-level `seo.metadata` fields in `seo-checks.json`. All m
 - Canonical points to a different page — accidental cross-page canonicalisation, often from a template bug
 - Canonical missing trailing slash / `http` vs `https` mismatch
 - Meta Robots Trap — raw HTML sends a `noindex` but JS later updates it to `index`, causing Google to drop the page early
-
----
-
-### links
-
-**Config key:** `seo.linkHealth.links`
-
-Asserts that specific links are visible on the page. Each entry requires at least one of:
-
-- `expectedText` — finds the link by its visible text using `getByRole('link', { name })`. **Preferred**: resilient to URL and class changes.
-- `selector` — finds the link by CSS selector. Use when you need to scope to a specific container (e.g. `.footer a`).
-
-Both can be combined: `selector` scopes the search, `expectedText` is then also asserted on the found element.
-
-**Example config:**
-```json
-"linkHealth": {
-  "links": {
-    "enabled": true,
-    "severity": "blocker",
-    "value": [
-      { "expectedText": "About Us" },
-      { "selector": ".footer a", "expectedText": "Privacy Policy" }
-    ]
-  }
-}
-```
 
 ---
 
@@ -261,9 +233,6 @@ Use `"lcpImageShouldHaveFetchPriority": true` on templates where the hero image 
 | No empty hrefs | `noEmptyHrefs: true` | `<a href="">` and `<a href="#">` |
 | No javascript hrefs | `noJavascriptHrefs: true` | `<a href="javascript:...">` |
 | Internal links not nofollow | `internalLinksNoCrawlBlock: true` | Internal links must not have `rel="nofollow"` |
-| External links have noopener | `externalLinksHaveNoopener: true` | External `target="_blank"` links must have `rel="noopener"` |
-| No generic anchor text | `anchorTextBlocklist: ["click here"]` | Exact text blocklist (case-insensitive) |
-| Specific links | `links` | Asserts that specific critical links are visible on the page |
 | No broken internal links | `checkBrokenInternalLinks: true` | HEAD-requests all internal links; disabled by default |
 
 ---
