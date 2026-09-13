@@ -114,7 +114,7 @@ export function defineSeoConfig(options: SeoGuardrailOptions): PlaywrightTestCon
     reporter: [
       ['html', { open: 'never' }],
       ['list'],
-      [path.resolve(__dirname, '..', 'src/reporters/seo-summary.ts')],
+      [path.resolve(__dirname, '..', 'src/reporters/seo-summary.js')],
     ],
     use: {
       baseURL: options.baseURL,
