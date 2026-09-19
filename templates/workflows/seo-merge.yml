@@ -4,6 +4,9 @@ on:
   push:
     branches: {{PUSH_BRANCHES}}
 
+permissions:
+  contents: read
+
 env:
   SEO_LANE: merge
 
