@@ -4,6 +4,10 @@ on:
   pull_request:
 {{PR_BRANCHES_LINE}}
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   SEO_LANE: pr
 
@@ -66,7 +70,7 @@ jobs:
         continue-on-error: true
         env:
           SEO_LANE: pr
-          TEST_BASE_URL: ${{ env.PREVIEW_URL }}
+          TEST_BASE_URL: {{TEST_BASE_URL}}
           PROD_BASE_URL: {{PROD_BASE_URL}}
           SEO_CANONICAL_MODE: {{SEO_CANONICAL_MODE}}
           PLAYWRIGHT_BLOB_OUTPUT_DIR: blob-report
