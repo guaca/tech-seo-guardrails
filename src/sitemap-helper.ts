@@ -6,6 +6,8 @@
  * Supports concurrency-limited HEAD requests for fast broken-link detection.
  */
 
+import { getShopifyPreviewCookieHeader } from './shopify-preview';
+
 /** Maximum URLs per sitemap file per the XML Sitemap protocol spec (https://sitemaps.org/protocol.html) */
 const MAX_SITEMAP_URLS = 50_000;
 
@@ -61,7 +63,11 @@ export async function fetchSitemap(
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 30_000);
-    const res = await fetch(sitemapUrl, { signal: controller.signal });
+    const sitemapCookie = getShopifyPreviewCookieHeader(sitemapUrl);
+    const res = await fetch(sitemapUrl, {
+      signal: controller.signal,
+      ...(sitemapCookie ? { headers: { Cookie: sitemapCookie } } : {}),
+    });
     clearTimeout(timer);
     if (!res.ok) {
       result.errors.push(`HTTP ${res.status} fetching ${sitemapUrl}`);
@@ -208,10 +214,12 @@ async function checkSingleUrl(
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), options.timeoutMs);
+      const linkCookie = getShopifyPreviewCookieHeader(url);
       const res = await fetch(url, {
         method: options.method,
         redirect: 'manual',
         signal: controller.signal,
+        ...(linkCookie ? { headers: { Cookie: linkCookie } } : {}),
       });
       clearTimeout(timer);
 
@@ -269,10 +277,12 @@ export async function followRedirectChain(
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), perHopTimeout);
+      const hopCookie = getShopifyPreviewCookieHeader(current);
       const res = await fetch(current, {
         method: 'HEAD',
         redirect: 'manual',
         signal: controller.signal,
+        ...(hopCookie ? { headers: { Cookie: hopCookie } } : {}),
       });
       clearTimeout(timer);
 

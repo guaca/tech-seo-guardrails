@@ -150,6 +150,8 @@ If your deployments are consistent (e.g. they always take about 45 seconds), the
 
 By default, Playwright loads pages from `TEST_BASE_URL`. If not set, it falls back to `PROD_BASE_URL`, then to `http://localhost:3000`.
 
+**Shopify:** `TEST_BASE_URL` and `PROD_BASE_URL` are typically the *same* domain — Shopify preview themes are served on the live domain, gated by a cookie rather than a separate URL. See [environments.md — Scenario 7](./environments.md#scenario-7-shopify-unpublished-preview-theme) for how `SHOPIFY_PREVIEW_THEME_ID` and the wizard's per-branch prompts wire this into `seo-merge.yml`.
+
 See [docs/environments.md](./environments.md) for local development scenarios.
 
 ---

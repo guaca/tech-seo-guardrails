@@ -114,6 +114,12 @@ function writeEnv(values) {
     '# Lane filter: pr | merge | scheduled | (blank = run all checks)'
   ]);
 
+  updateOrAppend('SHOPIFY_PREVIEW_THEME_ID', values.SHOPIFY_PREVIEW_THEME_ID || '', [
+    '',
+    '# Shopify only: theme ID of an unpublished preview theme to test locally.',
+    '# Leave blank unless you are testing a Shopify store via a preview theme link.'
+  ]);
+
   // Ensure file ends with a newline
   if (lines.length > 0 && lines[lines.length - 1] !== '') {
     lines.push('');
@@ -260,34 +266,73 @@ async function main() {
   header('Step 2 of 4 — URLs');
   print('');
 
-  const prodUrlPrompt = new Input({
-    message: 'Production URL (canonical domain)',
-    initial: existing.PROD_BASE_URL || exampleEnv.PROD_BASE_URL || 'https://your-site.com',
+  // A blank local preview_theme_id (testing the live theme) is indistinguishable from
+  // "not Shopify" by itself, so also recognize a *.myshopify.com domain from a previous run.
+  const isShopifyPrompt = new Confirm({
+    message: 'Is this a Shopify store?',
+    initial: !!existing.SHOPIFY_PREVIEW_THEME_ID || /myshopify\.com/i.test(existing.PROD_BASE_URL || ''),
+    format: (value) => (value ? 'Yes' : 'No'),
     ...promptOptions
   });
-  const prodUrl = await prodUrlPrompt.run();
+  const isShopify = await isShopifyPrompt.run();
 
-  const testUrlPrompt = new Input({
-    message: 'Test URL (where Playwright sends requests — press Enter to skip if only testing production)',
-    // No placeholder fallback here: Input submits `initial` verbatim on a bare Enter,
-    // so any non-empty default (even an example placeholder) would silently defeat
-    // "press Enter to skip." Only re-offer a value the user already configured.
-    initial: existing.TEST_BASE_URL || '',
-    ...promptOptions
-  });
-  const testUrl = await testUrlPrompt.run();
+  let prodUrl, testUrl, canonicalMode, shopifyPreviewThemeId;
 
-  print('');
-  const canonicalModePrompt = new Select({
-    message: 'How does your site generate canonical URLs?',
-    choices: [
-      { name: 'production', message: 'Production — canonicals always point to prod domain (Recommended)' },
-      { name: 'dynamic', message: 'Dynamic — canonicals reflect the current host (localhost/preview)' }
-    ],
-    initial: existing.SEO_CANONICAL_MODE === 'dynamic' ? 1 : 0,
-    ...promptOptions
-  });
-  const canonicalMode = await canonicalModePrompt.run();
+  if (isShopify) {
+    print('');
+    print(pc.gray('  Shopify preview themes are served on the SAME domain as production, gated by'));
+    print(pc.gray('  a cookie — so there\'s one domain here, not separate prod/test URLs.'));
+    print('');
+
+    const domainPrompt = new Input({
+      message: 'Shopify domain (e.g. your-store.myshopify.com or your custom domain)',
+      initial: existing.PROD_BASE_URL || exampleEnv.PROD_BASE_URL || 'https://your-store.myshopify.com',
+      ...promptOptions
+    });
+    const domain = await domainPrompt.run();
+    prodUrl = domain;
+    testUrl = domain;
+
+    const shopifyPreviewPrompt = new Input({
+      message: 'Theme ID to test locally (press Enter to test the live/published theme)',
+      initial: existing.SHOPIFY_PREVIEW_THEME_ID || '',
+      ...promptOptions
+    });
+    shopifyPreviewThemeId = await shopifyPreviewPrompt.run();
+
+    // TEST_BASE_URL === PROD_BASE_URL for Shopify — no separate host to be "dynamic" about.
+    canonicalMode = 'production';
+  } else {
+    const prodUrlPrompt = new Input({
+      message: 'Production URL (canonical domain)',
+      initial: existing.PROD_BASE_URL || exampleEnv.PROD_BASE_URL || 'https://your-site.com',
+      ...promptOptions
+    });
+    prodUrl = await prodUrlPrompt.run();
+
+    const testUrlPrompt = new Input({
+      message: 'Test URL (where Playwright sends requests — press Enter to skip if only testing production)',
+      // No placeholder fallback here: Input submits `initial` verbatim on a bare Enter,
+      // so any non-empty default (even an example placeholder) would silently defeat
+      // "press Enter to skip." Only re-offer a value the user already configured.
+      initial: existing.TEST_BASE_URL || '',
+      ...promptOptions
+    });
+    testUrl = await testUrlPrompt.run();
+    shopifyPreviewThemeId = '';
+
+    print('');
+    const canonicalModePrompt = new Select({
+      message: 'How does your site generate canonical URLs?',
+      choices: [
+        { name: 'production', message: 'Production — canonicals always point to prod domain (Recommended)' },
+        { name: 'dynamic', message: 'Dynamic — canonicals reflect the current host (localhost/preview)' }
+      ],
+      initial: existing.SEO_CANONICAL_MODE === 'dynamic' ? 1 : 0,
+      ...promptOptions
+    });
+    canonicalMode = await canonicalModePrompt.run();
+  }
 
   const sampleLimitPrompt = new Input({
     message: isBasicFlow
@@ -316,6 +361,7 @@ async function main() {
     SEO_CANONICAL_MODE: canonicalMode,
     SEO_SAMPLE_LIMIT: sampleLimit,
     SEO_LANE: '',
+    SHOPIFY_PREVIEW_THEME_ID: shopifyPreviewThemeId,
   });
 
   print(`\n  ${pc.cyan('✓')}  .env written.`);
@@ -437,6 +483,23 @@ async function main() {
     });
     const pushBranches = (await pushBranchesPrompt.run()).split(',').map(b => b.trim()).filter(Boolean);
 
+    let shopifyBranchThemeIds = {};
+    if (isShopify && pushBranches.length > 0) {
+      print('');
+      print(pc.gray('  For each branch, enter the preview theme it tests — leave blank to test the live'));
+      print(pc.gray('  published theme instead. Shopify has no ephemeral-per-PR preview like Vercel/Netlify,'));
+      print(pc.gray('  so only persistent branches (e.g. staging) typically need an ID here.'));
+      for (const branch of pushBranches) {
+        const branchIdPrompt = new Input({
+          message: `  preview_theme_id for branch "${branch}" (blank = live published theme)`,
+          initial: '',
+          ...promptOptions
+        });
+        const id = await branchIdPrompt.run();
+        if (id) shopifyBranchThemeIds[branch] = id;
+      }
+    }
+
     const prBranchesPrompt = new Input({
       message: 'Which branches should trigger SEO tests on PR? (type "all" for any)',
       initial: 'main, staging, dev',
@@ -454,35 +517,43 @@ async function main() {
     });
     const includeWeekly = await includeWeeklyPrompt.run();
 
-    print('');
-    const envPrepPrompt = new Select({
-      message: 'How will the CI test environment be prepared?',
-      choices: [
-        { name: '1', message: 'Start a local server in the workflow (e.g. npm start)' },
-        { name: '2', message: 'Wait for an external deployment (e.g. Vercel, WP Engine)' },
-        { name: '3', message: 'It is already running / No wait needed' }
-      ],
-      initial: 2,
-      ...promptOptions
-    });
-    const envPrep = await envPrepPrompt.run();
-
     let serverStep = '';
     let ciTestUrl = testUrl;
 
-    if (envPrep === '1') {
-      const startCmdPrompt = new Input({ message: 'Command to start your local server in CI', initial: 'npm start', ...promptOptions });
-      const startCmd = await startCmdPrompt.run();
-      const waitUrlPrompt = new Input({ message: 'URL to wait for before starting tests', initial: testUrl, ...promptOptions });
-      ciTestUrl = await waitUrlPrompt.run();
-      serverStep = `\n      - name: Start local server\n        run: |\n          ${startCmd} &\n          npx wait-on ${ciTestUrl} --timeout 60000`;
-    } else if (envPrep === '2') {
-      const ciUrlPrompt = new Input({ message: 'Test URL for CI (after deployment)', initial: testUrl, ...promptOptions });
-      ciTestUrl = await ciUrlPrompt.run();
-      serverStep = `\n      # TODO: Add steps here to wait for your external deployment to complete.\n      # See docs/ci-integration.md#waiting-for-external-deployments for examples.`;
+    if (isShopify) {
+      // Shopify hosts everything — there's no server to start and no external
+      // deployment to wait for. CI tests the same domain used locally; which
+      // theme it sees is controlled per-branch by the preview_theme_id prompt above.
+      print('');
+      print(pc.gray('  Shopify hosts everything, so there\'s no CI server to start or deployment to wait for.'));
     } else {
-      const ciUrlPrompt = new Input({ message: 'Test URL for CI', initial: testUrl, ...promptOptions });
-      ciTestUrl = await ciUrlPrompt.run();
+      print('');
+      const envPrepPrompt = new Select({
+        message: 'How will the CI test environment be prepared?',
+        choices: [
+          { name: '1', message: 'Start a local server in the workflow (e.g. npm start)' },
+          { name: '2', message: 'Wait for an external deployment (e.g. Vercel, WP Engine)' },
+          { name: '3', message: 'It is already running / No wait needed' }
+        ],
+        initial: 2,
+        ...promptOptions
+      });
+      const envPrep = await envPrepPrompt.run();
+
+      if (envPrep === '1') {
+        const startCmdPrompt = new Input({ message: 'Command to start your local server in CI', initial: 'npm start', ...promptOptions });
+        const startCmd = await startCmdPrompt.run();
+        const waitUrlPrompt = new Input({ message: 'URL to wait for before starting tests', initial: testUrl, ...promptOptions });
+        ciTestUrl = await waitUrlPrompt.run();
+        serverStep = `\n      - name: Start local server\n        run: |\n          ${startCmd} &\n          npx wait-on ${ciTestUrl} --timeout 60000`;
+      } else if (envPrep === '2') {
+        const ciUrlPrompt = new Input({ message: 'Test URL for CI (after deployment)', initial: testUrl, ...promptOptions });
+        ciTestUrl = await ciUrlPrompt.run();
+        serverStep = `\n      # TODO: Add steps here to wait for your external deployment to complete.\n      # See docs/ci-integration.md#waiting-for-external-deployments for examples.`;
+      } else {
+        const ciUrlPrompt = new Input({ message: 'Test URL for CI', initial: testUrl, ...promptOptions });
+        ciTestUrl = await ciUrlPrompt.run();
+      }
     }
 
     const configFlag = isInstalledDep ? '--config=node_modules/tech-seo-guardrails/playwright.config.js' : '';
@@ -496,6 +567,13 @@ async function main() {
       console.error(`\n  ${pc.red('!')} Debug: Error reading version: ${e.message}`);
     }
 
+    // Persistent branches only (per user's explicit call) — each branch either maps to its
+    // own preview_theme_id, or falls through to '' (tests the live published theme) via the
+    // `|| ''` in the expression below. Empty map = feature fully inert for this workflow.
+    const shopifyThemeIdExpr = Object.keys(shopifyBranchThemeIds).length > 0
+      ? `\${{ fromJSON('${JSON.stringify(shopifyBranchThemeIds)}')[github.ref_name] || '' }}`
+      : '';
+
     const vars = {
       VERSION: version,
       PUSH_BRANCHES: `[${pushBranches.join(', ')}]`,
@@ -507,6 +585,7 @@ async function main() {
       TEST_BASE_URL: ciTestUrl,
       PROD_BASE_URL: prodUrl,
       SEO_CANONICAL_MODE: canonicalMode,
+      SHOPIFY_PREVIEW_THEME_ID: shopifyThemeIdExpr,
     };
 
     function renderTemplate(content, templateVars) {
@@ -572,6 +651,9 @@ async function main() {
   print(`    SEO_CANONICAL_MODE  ${canonicalMode}`);
   print(`    SEO_SAMPLE_LIMIT    ${sampleLimit || '(all pages)'}`);
   print(`    waitForReady        ${waitForReady}`);
+  if (shopifyPreviewThemeId) {
+    print(`    SHOPIFY_PREVIEW_THEME_ID  ${shopifyPreviewThemeId}`);
+  }
   print(`\n  ${pc.bold('Next steps:')}`);
   if (isBasicFlow) {
     print(`\n  1. Re-run ${pc.bold(isInstalledDep ? 'npx seo-setup' : 'npm run setup')} any time to edit your Basic checks, thresholds, or pages.`);

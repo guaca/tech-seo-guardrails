@@ -22,6 +22,7 @@ A test framework you add to any project as a dependency. It covers:
 - **Rendering quality** — Googlebot two-phase viewport expansion, hidden SEO content
 - **Runtime health** — console errors, failed network requests, mixed content
 - **Site-wide health** — sitemap validity, broken links, redirect chains, noindex/sitemap conflicts
+- **Shopify support** — test an unpublished preview theme served on your live domain, gated by a cookie instead of a separate staging URL (see [Testing a Shopify store](#testing-a-shopify-store) below)
 
 Tests run with a real Chromium browser using the Googlebot Smartphone user-agent, a 412×732px viewport, and accurate two-phase viewport expansion — the same approach Google uses for mobile-first indexing.
 
@@ -76,11 +77,21 @@ npx seo-setup
 
 The wizard walks you through three steps:
 
-1. **URLs** — sets `PROD_BASE_URL` and `TEST_BASE_URL` in `.env`
+1. **URLs** — sets `PROD_BASE_URL` and `TEST_BASE_URL` in `.env`. First it asks **"Is this a Shopify store?"** — see [Testing a Shopify store](#testing-a-shopify-store) below
 2. **SEO contract** — creates `seo-checks.json`. First it asks **Basic** or **Custom** (see below)
 3. **CI/CD workflows** — optionally generates GitHub Actions workflows in `.github/workflows/` and adds `seo:*` scripts to your `package.json`
 
 Re-run `npx seo-setup` any time to update your URLs, edit your contract, or regenerate workflows. Use `npx seo-configure` any time to toggle Custom check groups.
+
+### Testing a Shopify store
+
+Shopify doesn't have a separate staging domain like most platforms — an **unpublished preview theme** is served on the *same domain* as production, gated by a cookie set when you visit `<your-store>/?preview_theme_id=<id>` (it 302s to the clean URL). This framework supports that directly:
+
+- Answer **Yes** to "Is this a Shopify store?" in Step 1 of the wizard, and it swaps the usual Production/Test URL questions for a dedicated sequence: one **domain** (used for both `PROD_BASE_URL` and `TEST_BASE_URL` — they're the same for Shopify) and a **theme ID to test locally** (leave blank to test the live published theme instead).
+- In Step 3 (CI/CD workflows), you'll be asked for a preview theme ID **per branch** that triggers tests on merge (blank = that branch tests the live theme). Shopify has no ephemeral-per-PR preview like Vercel/Netlify, so this is meant for **persistent branches only** (e.g. a long-lived `staging` branch), not the PR lane.
+- Under the hood, the framework visits the preview URL once per run, captures whatever cookie Shopify sets (no hardcoded cookie name/schema — it's undocumented and could change), and replays it for every check: page navigation and the raw HTTP requests some checks make directly (robots.txt, sitemap, broken-link checks). `SEO_LANE=production` (i.e. `npm run seo:test:prod`) always ignores this and tests the true live site, regardless of what's configured.
+
+See [docs/environments.md — Scenario 7](./docs/environments.md#scenario-7-shopify-unpublished-preview-theme) for the full walkthrough, including the generated CI YAML.
 
 ### 3. Create your SEO contract (`seo-checks.json`)
 
@@ -303,7 +314,7 @@ See [docs/ci-integration.md](./docs/ci-integration.md) for step-by-step setup fo
 | [docs/configuration.md](./docs/configuration.md) | Every field in `seo-checks.json`, with types, defaults, and examples |
 | [docs/checks-reference.md](./docs/checks-reference.md) | Every built-in check: what it tests, config options, common failures |
 | [docs/adding-checks.md](./docs/adding-checks.md) | How to write a custom check end-to-end (worked example: cookie consent banner) |
-| [docs/environments.md](./docs/environments.md) | All run scenarios: localhost, remote preview, GitHub Actions |
+| [docs/environments.md](./docs/environments.md) | All run scenarios: localhost, remote preview, GitHub Actions, [Shopify preview themes](./docs/environments.md#scenario-7-shopify-unpublished-preview-theme) |
 | [docs/ci-integration.md](./docs/ci-integration.md) | GitHub Actions setup, `TEST_BASE_URL`/`PROD_BASE_URL`, lanes, merge gate |
 
 ---
@@ -326,6 +337,7 @@ src/
   config-schema.ts     # Config schema validator: validateConfig(), ValidationError type
   robots-helper.ts     # robots.txt fetching and Googlebot allow/block checking
   sitemap-helper.ts    # Sitemap fetching, URL health checks, link sampling
+  shopify-preview.ts   # Shopify preview-theme cookie capture/replay (isShopifyPreviewActive, etc.)
   reporters/
     seo-summary.ts     # Custom Playwright reporter: groups by severity, writes test-results/seo-summary.md
 tests/
@@ -340,6 +352,7 @@ scripts/
   setup.js                   # Setup wizard: .env URLs, seo-checks.json, CI workflows + package.json scripts
   basic-contract-wizard.js   # Basic mode: builds a minimal seo-checks.json (no CSV crawl needed)
   configure.js               # Custom check/severity manager (npx seo-configure)
+  shopify-preview-setup.js   # Playwright globalSetup: captures the Shopify preview-theme cookie once per run
   wizard-utils.js            # Shared wizard helpers (prompt styling, CSV discovery)
   select-tests.sh            # Risk-based test selection for PR lane
   init-generator-config.py   # Wizard: create generator-config.json (pip install questionary)

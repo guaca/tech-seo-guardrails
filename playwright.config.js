@@ -29,6 +29,13 @@ if (!process.env.PLAYWRIGHT_BLOB_OUTPUT_DIR) {
 
 // Googlebot Smartphone user-agent (used for mobile-first indexing)
 const { GOOGLEBOT_SMARTPHONE_UA } = require('./src/robots-helper');
+const { SHOPIFY_STORAGE_STATE_PATH, isShopifyPreviewActive } = require('./src/shopify-preview');
+
+// Shopify preview-theme support: SHOPIFY_PREVIEW_THEME_ID is unset for everyone
+// except Shopify users testing an unpublished theme, so this stays a no-op
+// otherwise. Also forced off under SEO_LANE=production (see isShopifyPreviewActive).
+// See scripts/shopify-preview-setup.js and docs/environments.md.
+const shopifyPreviewEnabled = isShopifyPreviewActive();
 
 const googlebotUse = {
   channel: 'chrome',
@@ -50,6 +57,7 @@ module.exports = defineConfig({
   // Per-test timeout. Integration beforeAll overrides this to 60s via test.setTimeout()
   // so the page load phase has enough headroom without inflating individual test timeouts.
   timeout: 20_000,
+  globalSetup: shopifyPreviewEnabled ? path.resolve(__dirname, 'scripts/shopify-preview-setup.js') : undefined,
   reporter: [
     ['html', { open: 'never', outputFolder: path.join(process.cwd(), 'playwright-report') }],
     ['list'],
@@ -61,6 +69,12 @@ module.exports = defineConfig({
     // If neither is set, falls back to http://localhost:3000.
     // See docs/environments.md for scenario examples.
     baseURL: process.env.TEST_BASE_URL || process.env.PROD_BASE_URL || 'http://localhost:3000',
+    // Only set when SHOPIFY_PREVIEW_THEME_ID is present — applies the cookie
+    // scripts/shopify-preview-setup.js captured to every fixture-created context
+    // (the `request` fixture, and all of tests/e2e/seo-links.spec.ts). The manual
+    // per-page context in tests/integration/seo-dom.spec.ts doesn't inherit this
+    // automatically and re-reads the same path explicitly.
+    storageState: shopifyPreviewEnabled ? SHOPIFY_STORAGE_STATE_PATH : undefined,
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },

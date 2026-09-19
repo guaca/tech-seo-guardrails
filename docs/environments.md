@@ -202,6 +202,34 @@ SEO_LANE=production npx seo-test --project=unit --project=integration
 
 ---
 
+## Scenario 7: Shopify unpublished preview theme
+
+Shopify doesn't have a separate staging domain the way most platforms do. An "unpublished preview theme" is served on the **same domain** as production — visiting `<your-store>/?preview_theme_id=<id>` sets a cookie and redirects to the clean URL; from then on, any request carrying that cookie sees the preview theme instead of whatever's published. This means `TEST_BASE_URL` and `PROD_BASE_URL` are typically the **same value** for Shopify — the preview theme isn't a different URL, it's the same URL with a cookie flag.
+
+**What to set:**
+
+```bash
+TEST_BASE_URL=https://your-store.myshopify.com   # same as PROD_BASE_URL
+PROD_BASE_URL=https://your-store.myshopify.com
+SHOPIFY_PREVIEW_THEME_ID=123456789
+```
+
+**How it works:** when `SHOPIFY_PREVIEW_THEME_ID` is set, a Playwright `globalSetup` step (`scripts/shopify-preview-setup.js`) visits `<baseUrl>/?preview_theme_id=<id>` once before any test runs, captures the cookie Shopify sets, and reuses it for every check afterward — both browser navigation (`page.goto()`) and the raw HTTP requests some checks make directly (robots.txt, sitemap, broken-link and redirect-chain checks). You don't need to know Shopify's actual cookie name or format; the framework lets Shopify set it and just replays it.
+
+**Local development:** in Step 2 (URLs), `npx seo-setup` first asks "Is this a Shopify store?" — answering yes replaces the usual separate Production/Test URL questions with a dedicated sequence: one **domain** (used for both `PROD_BASE_URL` and `TEST_BASE_URL`, since they're the same for Shopify), then a **theme ID to test locally** (blank = test the live published theme). `SEO_CANONICAL_MODE` is set to `production` automatically without asking, since there's no separate host for it to distinguish.
+
+**CI/CD:** preview theme IDs are **fixed per branch**, not dynamic per PR — Shopify has no equivalent of an ephemeral preview URL per pull request the way Vercel or Netlify do. When generating `seo-merge.yml` (Step 4 of the wizard), if you answered "yes" to the Shopify question in Step 2, you'll be asked for a preview theme ID for each branch that triggers tests on merge (blank = that branch tests the live published theme). Only configure this for **persistent branches** (e.g. a long-lived `staging` branch you keep pushing an unpublished theme to) — it isn't meant for the PR lane (`seo-pr.yml`), which isn't touched by this feature at all. Step 4's usual "how is the CI environment prepared" question (start a server / wait for a deployment / already running) is skipped entirely for Shopify — there's no server to start or deployment to wait for, since Shopify hosts everything already.
+
+Internally this becomes a small lookup baked into the generated workflow:
+
+```yaml
+SHOPIFY_PREVIEW_THEME_ID: ${{ fromJSON('{"staging":"123456789","main":""}')[github.ref_name] || '' }}
+```
+
+**`SEO_LANE=production` always wins:** the [production lane](#scenario-6-testing-production-directly-manual) is documented to mean "ignore staging config and test the live site directly." If `SHOPIFY_PREVIEW_THEME_ID` is still sitting in your local `.env` from testing a preview theme, running `npm run seo:test:prod` (or any `SEO_LANE=production` run) ignores it and tests the true live theme — the feature never engages under that lane, regardless of what's configured.
+
+---
+
 ## E2E and the production constraint
 
 The `e2e` project (`tests/e2e/seo-links.spec.ts`) is **production-only**. It always fetches the sitemap from `PROD_BASE_URL`, regardless of `TEST_BASE_URL`.
@@ -228,6 +256,7 @@ The `production` lane is primarily intended for fast validation of unit and inte
 | `PROD_BASE_URL` | No* | Canonical production URL for identity checks. Overrides `seo-checks.json baseUrl` if set. |
 | `SEO_LANE` | No | Lane filter: `pr`, `merge`, `scheduled`, `production`, or empty (runs all checks). |
 | `SEO_SAMPLE_LIMIT` | No | Max pages per template in the integration suite. Overrides `sampleConfig.maxPagesPerTemplate`. Ignored when `SEO_LANE=scheduled`. |
+| `SHOPIFY_PREVIEW_THEME_ID` | No | Shopify only — theme ID of an unpublished preview theme to test. See [Scenario 7](#scenario-7-shopify-unpublished-preview-theme). |
 
 *At least one of `PROD_BASE_URL` or `seo-checks.json baseUrl` must be set.
 

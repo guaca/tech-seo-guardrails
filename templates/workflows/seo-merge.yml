@@ -46,6 +46,7 @@ jobs:
           TEST_BASE_URL: {{TEST_BASE_URL}}
           PROD_BASE_URL: {{PROD_BASE_URL}}
           SEO_CANONICAL_MODE: {{SEO_CANONICAL_MODE}}
+          SHOPIFY_PREVIEW_THEME_ID: {{SHOPIFY_PREVIEW_THEME_ID}}
           PLAYWRIGHT_BLOB_OUTPUT_DIR: blob-report
 
       - name: Upload blob report

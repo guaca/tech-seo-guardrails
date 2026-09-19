@@ -5,6 +5,9 @@ node_modules/
 .env
 seo-checks.json
 
+# Captured Shopify preview-theme cookie (see docs/environments.md#scenario-7-shopify-unpublished-preview-theme)
+.shopify-preview-state.json
+
 # Python bytecode and caches
 __pycache__/
 *.pyc
@@ -18,9 +21,11 @@ src/config-resolver.js
 src/config-schema.js
 src/robots-helper.js
 src/sitemap-helper.js
+src/shopify-preview.js
 tests/helpers/assertions.js
 tests/helpers/interceptors.js
 tests/helpers/shadow-dom.js
 tests/unit/seo-config.spec.js
+tests/unit/shopify-preview.spec.js
 tests/integration/seo-dom.spec.js
 tests/e2e/seo-links.spec.js

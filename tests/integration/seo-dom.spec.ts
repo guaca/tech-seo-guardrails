@@ -12,6 +12,8 @@ import { test, expect, type Response, type Page, type BrowserContext } from '@pl
 import { resolveConfig, samplePagesByTemplate } from '../../src/config-resolver';
 import { checkUrlsBatch } from '../../src/sitemap-helper';
 import { getRobots, GOOGLEBOT_UA, GOOGLEBOT_SMARTPHONE_UA } from '../../src/robots-helper';
+import { SHOPIFY_STORAGE_STATE_PATH, isShopifyPreviewActive } from '../../src/shopify-preview';
+import * as fs from 'fs';
 import { setupInterceptors } from '../helpers/interceptors';
 import { seoExpect, annotateSeverity, getSeverity, isBasicCheck } from '../helpers/assertions';
 import { injectDeepQueryAll } from '../helpers/shadow-dom';
@@ -178,6 +180,12 @@ for (const pageConfig of sampledPages) {
       _context = await browser.newContext({
         ...GOOGLEBOT_CONTEXT_OPTIONS,
         baseURL: testBaseUrl,
+        // This context is created manually, so it doesn't inherit playwright.config.js's
+        // use.storageState automatically — re-read the same Shopify preview-theme cookie
+        // file explicitly (no-op when the feature isn't active, incl. under SEO_LANE=production).
+        ...(isShopifyPreviewActive() && fs.existsSync(SHOPIFY_STORAGE_STATE_PATH)
+          ? { storageState: SHOPIFY_STORAGE_STATE_PATH }
+          : {}),
       });
       page = await _context.newPage();
       // Inject shadow DOM traversal helper before navigation.

@@ -6,6 +6,7 @@
  */
 
 import robotsParser from 'robots-parser';
+import { getShopifyPreviewCookieHeader } from './shopify-preview';
 
 // Short token used to match `User-agent:` directives in robots.txt — NOT a browser
 // User-Agent header. For the actual browser context, use GOOGLEBOT_SMARTPHONE_UA.
@@ -24,12 +25,17 @@ export async function getRobots(
 ): Promise<ReturnType<typeof robotsParser> | null> {
   if (_robotsCache.has(baseUrl)) return _robotsCache.get(baseUrl)!;
   try {
+    const url = `${baseUrl}/robots.txt`;
+    const cookie = getShopifyPreviewCookieHeader(url);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 5000);
-    const res = await fetch(`${baseUrl}/robots.txt`, { signal: controller.signal });
+    const res = await fetch(url, {
+      signal: controller.signal,
+      ...(cookie ? { headers: { Cookie: cookie } } : {}),
+    });
     clearTimeout(timer);
     if (res.ok) {
-      _robotsCache.set(baseUrl, robotsParser(`${baseUrl}/robots.txt`, await res.text()));
+      _robotsCache.set(baseUrl, robotsParser(url, await res.text()));
     } else {
       _robotsCache.set(baseUrl, null);
     }

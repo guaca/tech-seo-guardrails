@@ -15,6 +15,7 @@ export type { ValidationError } from './config-schema';
 export { loadSeoConfig, getProjectRoot, getPackageRoot } from './load-config';
 export { getRobots, resetRobotsCache, GOOGLEBOT_UA, GOOGLEBOT_SMARTPHONE_UA } from './robots-helper';
 export { fetchSitemap, checkUrlsBatch, sampleUrls } from './sitemap-helper';
+export { getShopifyPreviewCookieHeader, SHOPIFY_STORAGE_STATE_PATH } from './shopify-preview';
 export type { SitemapUrl, SitemapValidation, LinkCheckResult } from './sitemap-helper';
 
 export interface SeoGuardrailOptions {
