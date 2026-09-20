@@ -7,12 +7,13 @@
 import { defineConfig, type PlaywrightTestConfig } from '@playwright/test';
 import * as path from 'path';
 import { GOOGLEBOT_SMARTPHONE_UA } from './robots-helper';
+import { getGuardrailsDir } from './load-config';
 
 export { resolveConfig, resolvePageConfig, filterByLane, samplePagesByTemplate } from './config-resolver';
 export type { SeoConfig, PageConfig, ResolvedPageConfig, WaitForReady } from './config-resolver';
 export { validateConfig } from './config-schema';
 export type { ValidationError } from './config-schema';
-export { loadSeoConfig, getProjectRoot, getPackageRoot } from './load-config';
+export { loadSeoConfig, getProjectRoot, getPackageRoot, getGuardrailsDir, GUARDRAILS_DIR_NAME } from './load-config';
 export { getRobots, resetRobotsCache, GOOGLEBOT_UA, GOOGLEBOT_SMARTPHONE_UA } from './robots-helper';
 export { fetchSitemap, checkUrlsBatch, sampleUrls } from './sitemap-helper';
 export type { SitemapUrl, SitemapValidation, LinkCheckResult } from './sitemap-helper';
@@ -112,7 +113,7 @@ export function defineSeoConfig(options: SeoGuardrailOptions): PlaywrightTestCon
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 1 : undefined,
     reporter: [
-      ['html', { open: 'never' }],
+      ['html', { open: 'never', outputFolder: path.join(getGuardrailsDir(), 'playwright-report') }],
       ['list'],
       [path.resolve(__dirname, '..', 'src/reporters/seo-summary.js')],
     ],
@@ -121,7 +122,7 @@ export function defineSeoConfig(options: SeoGuardrailOptions): PlaywrightTestCon
       trace: 'on-first-retry',
       screenshot: 'only-on-failure',
     },
-    outputDir: path.join(process.cwd(), 'test-results'),
+    outputDir: path.join(getGuardrailsDir(), 'test-results'),
     projects,
     ...(options.webServer
       ? {

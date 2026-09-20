@@ -15,6 +15,7 @@
 const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const { getGuardrailsDir } = require('../scripts/wizard-utils');
 
 // ── Load .env from consumer's project root (lightweight, no dependency) ──────
 
@@ -37,7 +38,7 @@ if (fs.existsSync(envPath)) {
 // base URL regardless of SEO_LANE or TEST_BASE_URL.
 
 if (!process.env.PROD_BASE_URL) {
-  const seoConfigPath = path.join(process.cwd(), 'seo-checks.json');
+  const seoConfigPath = path.join(getGuardrailsDir(process.cwd()), 'seo-checks.json');
   if (fs.existsSync(seoConfigPath)) {
     try {
       const config = JSON.parse(fs.readFileSync(seoConfigPath, 'utf-8'));

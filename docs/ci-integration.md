@@ -18,7 +18,7 @@ The framework ships with three workflow files in `.github/workflows/`. Each targ
 
 **Lane:** `SEO_LANE=pr`
 
-**Merge gate:** the job posts an SEO summary as a PR comment, then reads `test-results/seo-summary.json` (written by the reporter) to check for blocker failures. If `status` is `"FAILED"`, the job exits with a non-zero code and blocks the merge. Warnings don't block the merge.
+**Merge gate:** the job posts an SEO summary as a PR comment, then reads `.tech-seo-guardrails/test-results/seo-summary.json` (written by the reporter) to check for blocker failures. If `status` is `"FAILED"`, the job exits with a non-zero code and blocks the merge. Warnings don't block the merge.
 
 This is your main developer-facing feedback loop. It gives targeted, fast results: if only content files changed, only metadata checks run; if template files changed, the full integration suite runs.
 
@@ -237,11 +237,11 @@ The PR workflow's merge gate works like this:
 
 - name: Fail if blocker failures found
   run: |
-    if [ ! -f test-results/seo-summary.json ]; then
+    if [ ! -f .tech-seo-guardrails/test-results/seo-summary.json ]; then
       echo "⚠️  seo-summary.json not found — reporter may have failed. Treating as failure."
       exit 1
     fi
-    STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('test-results/seo-summary.json','utf-8')).status)")
+    STATUS=$(node -e "console.log(JSON.parse(require('fs').readFileSync('.tech-seo-guardrails/test-results/seo-summary.json','utf-8')).status)")
     if [ "$STATUS" = "FAILED" ]; then
       echo "❌ Blocker failures detected — merge is blocked."
       exit 1
@@ -254,14 +254,14 @@ The PR workflow's merge gate works like this:
 
 ### The SEO summary report
 
-After shards complete, the merge-reports job combines blob reports and runs the custom reporter (`src/reporters/seo-summary.ts`), which writes two files:
+After shards complete, the merge-reports job combines blob reports and runs the custom reporter (`src/reporters/seo-summary.js`), which writes two files:
 
-- **`test-results/seo-summary.md`** — human-readable report posted as a PR comment. Groups results into Blockers (hard failures) and Warnings (soft failures).
-- **`test-results/seo-summary.json`** — machine-readable result for CI consumption: `{ "blockers": N, "gradedBlockers": N, "otherFailures": N, "warnings": N, "total": N, "status": "FAILED"|"PASSED" }`. The merge gate reads `blockers` instead of grepping the markdown, making it immune to formatting changes. `blockers` counts both graded blocker-severity check failures (`gradedBlockers`) and unclassified structural failures (`otherFailures`) — unit config-validation tests and e2e sitemap/link checks never carry a per-check severity, so a broken `seo-checks.json` or a broken sitemap still fails the gate instead of being silently ignored.
+- **`.tech-seo-guardrails/test-results/seo-summary.md`** — human-readable report posted as a PR comment. Groups results into Blockers (hard failures) and Warnings (soft failures).
+- **`.tech-seo-guardrails/test-results/seo-summary.json`** — machine-readable result for CI consumption: `{ "blockers": N, "gradedBlockers": N, "otherFailures": N, "warnings": N, "total": N, "status": "FAILED"|"PASSED" }`. The merge gate reads `blockers` instead of grepping the markdown, making it immune to formatting changes. `blockers` counts both graded blocker-severity check failures (`gradedBlockers`) and unclassified structural failures (`otherFailures`) — unit config-validation tests and e2e sitemap/link checks never carry a per-check severity, so a broken `seo-checks.json` or a broken sitemap still fails the gate instead of being silently ignored.
 
 Both files are uploaded as artifacts (retained for 14 days on PR runs, 30 days on weekly runs).
 
-If the reporter itself crashes or fails to write the files (e.g. disk full), the merge gate detects the missing `test-results/seo-summary.json` and fails the job with a clear error message rather than silently passing.
+If the reporter itself crashes or fails to write the files (e.g. disk full), the merge gate detects the missing `.tech-seo-guardrails/test-results/seo-summary.json` and fails the job with a clear error message rather than silently passing.
 
 ---
 
@@ -276,8 +276,8 @@ The PR comment step uses `actions/github-script`:
   with:
     script: |
       const fs = require('fs');
-      const summary = fs.existsSync('test-results/seo-summary.md')
-        ? fs.readFileSync('test-results/seo-summary.md', 'utf-8')
+      const summary = fs.existsSync('.tech-seo-guardrails/test-results/seo-summary.md')
+        ? fs.readFileSync('.tech-seo-guardrails/test-results/seo-summary.md', 'utf-8')
         : 'SEO summary report not available.';
       github.rest.issues.createComment({
         issue_number: context.issue.number,

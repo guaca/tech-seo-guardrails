@@ -19,6 +19,8 @@ from pathlib import Path
 from collections import defaultdict
 from urllib.parse import urlparse
 
+from guardrails_paths import guardrails_dir
+
 
 def read_env_value(key: str) -> str:
     """Read a single value from .env in the current working directory."""
@@ -239,8 +241,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--out",
-        default="generator-config.json",
-        help="Output path (default: generator-config.json)",
+        default=str(guardrails_dir() / "generator-config.json"),
+        help="Output path (default: .tech-seo-guardrails/generator-config.json)",
     )
     parser.add_argument(
         "--force",
@@ -501,6 +503,7 @@ def main() -> None:
         "templates": templates_cfg,
     }
 
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
         f.write("\n")

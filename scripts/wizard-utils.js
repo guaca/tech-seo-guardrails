@@ -29,6 +29,16 @@ const promptOptions = {
   }
 };
 
+// All wizard-generated/consumed files live under one folder in the consumer's
+// project root, instead of scattered loose files — mirrors the .github/workflows/
+// convention (a dot-folder, fully visible to git/npm/CI; the leading dot only
+// affects default `ls` listing).
+const GUARDRAILS_DIR_NAME = '.tech-seo-guardrails';
+
+function getGuardrailsDir(projectRoot) {
+  return path.join(projectRoot, GUARDRAILS_DIR_NAME);
+}
+
 function findCsvFiles(dir, maxDepth = 2, _depth = 0) {
   const results = [];
   if (_depth > maxDepth) return results;
@@ -61,4 +71,4 @@ function isInstalledDependency(pkgRoot, cwd = process.cwd()) {
   }
 }
 
-module.exports = { print, DIVIDER, header, promptOptions, findCsvFiles, isInstalledDependency };
+module.exports = { print, DIVIDER, header, promptOptions, findCsvFiles, isInstalledDependency, GUARDRAILS_DIR_NAME, getGuardrailsDir };
