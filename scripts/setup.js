@@ -9,7 +9,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const { Select, Input, Confirm, Toggle } = require('enquirer');
 const pc = require('picocolors');
-const { print, header, promptOptions, findCsvFiles, isInstalledDependency } = require('./wizard-utils');
+const { print, header, promptOptions, findCsvFiles, isInstalledDependency, getGuardrailsDir } = require('./wizard-utils');
 const { runBasicContractWizard } = require('./basic-contract-wizard');
 
 // When run as a dependency (npx seo-setup), write to the consumer's project root.
@@ -20,7 +20,7 @@ const PROJECT_ROOT = isInstalledDep ? process.cwd() : PKG_ROOT;
 
 const ENV_PATH = path.join(PROJECT_ROOT, '.env');
 const ENV_EXAMPLE_PATH = path.join(PKG_ROOT, '.env.example');
-const CONFIG_PATH = path.join(PROJECT_ROOT, 'seo-checks.json');
+const CONFIG_PATH = path.join(getGuardrailsDir(PROJECT_ROOT), 'seo-checks.json');
 const CONFIG_EXAMPLE_PATH = path.join(PKG_ROOT, 'seo-checks.example.json');
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -130,8 +130,10 @@ async function main() {
   print(pc.cyan(pc.bold('  ║          SEO Guardrails — First-time Setup               ║')));
   print(pc.cyan(pc.bold('  ╚══════════════════════════════════════════════════════════╝')));
   print('');
-  print('  This wizard sets up your .env and seo-checks.json.');
+  print('  This wizard sets up your .env and .tech-seo-guardrails/seo-checks.json.');
   print(pc.gray('  Use arrow keys to navigate and Enter to confirm.'));
+
+  fs.mkdirSync(getGuardrailsDir(PROJECT_ROOT), { recursive: true });
 
   // ── Inject scripts into consumer's package.json
   if (isInstalledDep) {
@@ -372,7 +374,7 @@ async function main() {
       return;
     }
 
-    const genConfigPath = path.join(PROJECT_ROOT, 'generator-config.json');
+    const genConfigPath = path.join(getGuardrailsDir(PROJECT_ROOT), 'generator-config.json');
     const initScript = path.join(PKG_ROOT, 'scripts', 'init-generator-config.py');
     const generateScript = path.join(PKG_ROOT, 'scripts', 'generate-from-sf.py');
 

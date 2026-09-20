@@ -7,7 +7,7 @@ supported column format (see pages.template.csv for a blank template).
 
 Usage:
     python scripts/generate-from-sf.py crawl-export.csv
-    python scripts/generate-from-sf.py crawl-export.csv --config generator-config.json --out seo-checks.json
+    python scripts/generate-from-sf.py crawl-export.csv --config .tech-seo-guardrails/generator-config.json --out .tech-seo-guardrails/seo-checks.json
     python scripts/generate-from-sf.py crawl-export.csv --include-noindex --include-non-200
 
 Required CSV columns:
@@ -24,6 +24,8 @@ import re
 import sys
 from pathlib import Path
 from urllib.parse import urlparse
+
+from guardrails_paths import guardrails_dir
 
 
 # ---------------------------------------------------------------------------
@@ -300,13 +302,13 @@ def main():
     parser.add_argument("csv_file", nargs="?", help="Path to the Screaming Frog CSV export")
     parser.add_argument(
         "--config",
-        default="generator-config.json",
-        help="Path to generator-config.json (default: generator-config.json)",
+        default=str(guardrails_dir() / "generator-config.json"),
+        help="Path to generator-config.json (default: .tech-seo-guardrails/generator-config.json)",
     )
     parser.add_argument(
         "--out",
-        default="seo-checks.json",
-        help="Output file path (default: seo-checks.json)",
+        default=str(guardrails_dir() / "seo-checks.json"),
+        help="Output file path (default: .tech-seo-guardrails/seo-checks.json)",
     )
     parser.add_argument(
         "--base-url",
@@ -371,7 +373,7 @@ def main():
     if not config_path.exists():
         print(f"ERROR: Config file not found: {config_path}", file=sys.stderr)
         print(
-            "       Copy generator-config.example.json to generator-config.json and edit it.",
+            "       Copy generator-config.example.json to .tech-seo-guardrails/generator-config.json and edit it.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -635,7 +637,7 @@ def main():
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(gen_cfg, f, indent=2, ensure_ascii=False)
             f.write("\n")
-        print("  ✓  Updated patterns saved to generator-config.json\n")
+        print("  ✓  Updated patterns saved to .tech-seo-guardrails/generator-config.json\n")
 
     # ---- Build clean template output blocks (after patterns are confirmed) ----
     templates_out: dict = {}
@@ -672,6 +674,7 @@ def main():
 
     # ---- Write output ----
     out_path = Path(args.out)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 

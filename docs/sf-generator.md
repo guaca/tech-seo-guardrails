@@ -169,8 +169,8 @@ npm run seo:generate -- my-crawl.csv --include-noindex
 
 | Flag | Default | Description |
 |---|---|---|
-| `--config PATH` | `generator-config.json` | Path to your rules template |
-| `--out PATH` | `seo-checks.json` | Output file path |
+| `--config PATH` | `.tech-seo-guardrails/generator-config.json` | Path to your rules template |
+| `--out PATH` | `.tech-seo-guardrails/seo-checks.json` | Output file path |
 | `--base-url URL` | from config | Override `baseUrl` from config |
 | `--include-noindex` | off | Include non-indexable pages (skipped by default) |
 | `--include-non-200` | off | Include pages with status other than 200 or 304 (skipped by default) |
