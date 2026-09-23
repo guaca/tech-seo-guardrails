@@ -45,7 +45,7 @@ Every check has a severity:
 - **Blocker** — hard `expect()`. Failing check blocks the PR merge.
 - **Warning** — `expect.soft()`. Failure is surfaced in the PR comment for review but doesn't block the merge.
 
-The CI workflow decouples the Playwright exit code from the merge gate: a post-run step reads `test-results/seo-summary.json` and only fails if it contains blocker failures.
+The CI workflow decouples the Playwright exit code from the merge gate: a post-run step reads `.tech-seo-guardrails/test-results/seo-summary.json` and only fails if it contains blocker failures.
 
 ---
 
@@ -75,23 +75,24 @@ npx playwright install chromium
 npx seo-setup
 ```
 
-The wizard walks you through three steps:
+The wizard walks you through four steps:
 
-1. **URLs** — sets `PROD_BASE_URL` and `TEST_BASE_URL` in `.env`. First it asks **"Is this a Shopify store?"** — see [Testing a Shopify store](#testing-a-shopify-store) below
-2. **SEO contract** — creates `seo-checks.json`. First it asks **Basic** or **Custom** (see below)
-3. **CI/CD workflows** — optionally generates GitHub Actions workflows in `.github/workflows/` and adds `seo:*` scripts to your `package.json`
+1. **SEO contract mode** — **Basic** or **Custom** (see below)
+2. **URLs** — sets `PROD_BASE_URL`, `TEST_BASE_URL` and `SEO_CANONICAL_MODE` in `.env`, plus an optional Shopify preview theme ID for testing locally (see [Testing a Shopify store](#testing-a-shopify-store) below)
+3. **SEO contract** — creates `.tech-seo-guardrails/seo-checks.json`
+4. **CI/CD workflows** — optionally generates GitHub Actions workflows in `.github/workflows/`, adds `seo:*` scripts to your `package.json`, and asks how CI should reach **each branch's environment** — a static URL, a Shopify preview theme, a local server to start, or a deployment to wait for (written to `.tech-seo-guardrails/seo-environments.json`)
 
 Re-run `npx seo-setup` any time to update your URLs, edit your contract, or regenerate workflows. Use `npx seo-configure` any time to toggle Custom check groups.
 
 ### Testing a Shopify store
 
-Shopify doesn't have a separate staging domain like most platforms — an **unpublished preview theme** is served on the *same domain* as production, gated by a cookie set when you visit `<your-store>/?preview_theme_id=<id>` (it 302s to the clean URL). This framework supports that directly:
+Shopify doesn't have a separate staging domain like most platforms — an **unpublished preview theme** is served on the *same domain* as production, gated by a cookie set when you visit `<your-store>/?preview_theme_id=<id>` (it 302s to the clean URL). This framework supports that directly, as one of four environment strategies rather than a separate mode:
 
-- Answer **Yes** to "Is this a Shopify store?" in Step 1 of the wizard, and it swaps the usual Production/Test URL questions for a dedicated sequence: one **domain** (used for both `PROD_BASE_URL` and `TEST_BASE_URL` — they're the same for Shopify) and a **theme ID to test locally** (leave blank to test the live published theme instead).
-- In Step 3 (CI/CD workflows), you'll be asked for a preview theme ID **per branch** that triggers tests on merge (blank = that branch tests the live theme). Shopify has no ephemeral-per-PR preview like Vercel/Netlify, so this is meant for **persistent branches only** (e.g. a long-lived `staging` branch), not the PR lane.
+- **Locally**, Step 2 of the wizard asks for a preview theme ID to test on your own machine (blank = test the live published theme) — independent of anything configured per branch.
+- **In CI** (Step 4), each branch picks its own strategy — pick `shopify-preview` for a branch and you'll be asked for its `preview_theme_id` (blank = live published theme). Shopify has no ephemeral-per-PR preview like Vercel/Netlify, so this is typically only meaningful for **persistent branches** (e.g. a long-lived `staging` branch) — nothing stops you from mixing strategies, e.g. `shopify-preview` for `staging` and `static-url` for `main`.
 - Under the hood, the framework visits the preview URL once per run, captures whatever cookie Shopify sets (no hardcoded cookie name/schema — it's undocumented and could change), and replays it for every check: page navigation and the raw HTTP requests some checks make directly (robots.txt, sitemap, broken-link checks). `SEO_LANE=production` (i.e. `npm run seo:test:prod`) always ignores this and tests the true live site, regardless of what's configured.
 
-See [docs/environments.md — Scenario 7](./docs/environments.md#scenario-7-shopify-unpublished-preview-theme) for the full walkthrough, including the generated CI YAML.
+See [docs/environments.md — Scenario 7](./docs/environments.md#scenario-7-per-branch-environments-shopify-included) for the full walkthrough, including the generated CI YAML.
 
 ### 3. Create your SEO contract (`seo-checks.json`)
 
@@ -223,12 +224,39 @@ As this project is in **Alpha**, updates to the core logic and CI workflows are 
 
 ---
 
+## Migrating to `.tech-seo-guardrails/`
+
+Every file this framework generates in your project now lives under one folder, `.tech-seo-guardrails/`, instead of scattered loose files at your project root — the same dot-folder convention as `.github/workflows/` (fully tracked by git, zero effect on CI; the leading dot only changes default `ls` listing). This is a breaking change with no automatic fallback — if you were using an older version, migrate manually:
+
+| Before | After |
+|---|---|
+| `seo-checks.json` | `.tech-seo-guardrails/seo-checks.json` |
+| `generator-config.json` | `.tech-seo-guardrails/generator-config.json` |
+| `playwright-report/` | `.tech-seo-guardrails/playwright-report/` |
+| `test-results/` | `.tech-seo-guardrails/test-results/` |
+| `blob-report/` | `.tech-seo-guardrails/blob-report/` |
+
+`.env` is **not** moving — it stays at your project root.
+
+**Steps:**
+```bash
+mkdir -p .tech-seo-guardrails
+git mv seo-checks.json .tech-seo-guardrails/seo-checks.json   # preserves history
+mv generator-config.json .tech-seo-guardrails/ 2>/dev/null    # if present — not git-tracked, plain mv is fine
+rm -rf playwright-report/ test-results/ blob-report/          # ephemeral/gitignored, safe to delete
+```
+Then update your `.gitignore` — see [Configuration files](#configuration-files) below — and **re-run `npx seo-setup`**. This step is required, not optional: your existing generated `.github/workflows/*.yml` still reference the old bare paths and will fail silently in CI (empty artifact uploads, failing `test -f` gate checks) until regenerated. Commit the moved `seo-checks.json`, the updated `.gitignore`, and the regenerated workflow files together.
+
+---
+
 ## Configuration files
 
 | File | Required | Description |
 |---|---|---|
-| `seo-checks.json` | **Yes** | Your site's SEO contract — pages, expected metadata, check config. Generated by the setup wizard: Basic (existence/minimum-length checks, no crawl needed) or Custom (from a CSV or the example JSON). |
-| `.env` | **Yes** | `PROD_BASE_URL` and `TEST_BASE_URL`. Created by the setup wizard. Never commit this file. |
+| `.tech-seo-guardrails/seo-checks.json` | **Yes** | Your site's SEO contract — pages, expected metadata, check config. Generated by the setup wizard: Basic (existence/minimum-length checks, no crawl needed) or Custom (from a CSV or the example JSON). Commit this file — it's your test suite's data. |
+| `.env` | **Yes** | `PROD_BASE_URL` and `TEST_BASE_URL`. Created by the setup wizard, at your project root (not inside `.tech-seo-guardrails/`). Never commit this file. |
+
+Everything else this framework generates — `generator-config.json`, Playwright's HTML report and test output — also lives under `.tech-seo-guardrails/`. See [Migrating to `.tech-seo-guardrails/`](#migrating-to-tech-seo-guardrails) if you're on an older version.
 
 No `playwright.config.js` changes are needed — `npx seo-test` handles it.
 
@@ -314,7 +342,7 @@ See [docs/ci-integration.md](./docs/ci-integration.md) for step-by-step setup fo
 | [docs/configuration.md](./docs/configuration.md) | Every field in `seo-checks.json`, with types, defaults, and examples |
 | [docs/checks-reference.md](./docs/checks-reference.md) | Every built-in check: what it tests, config options, common failures |
 | [docs/adding-checks.md](./docs/adding-checks.md) | How to write a custom check end-to-end (worked example: cookie consent banner) |
-| [docs/environments.md](./docs/environments.md) | All run scenarios: localhost, remote preview, GitHub Actions, [Shopify preview themes](./docs/environments.md#scenario-7-shopify-unpublished-preview-theme) |
+| [docs/environments.md](./docs/environments.md) | All run scenarios: localhost, remote preview, GitHub Actions, [per-branch environments incl. Shopify preview themes](./docs/environments.md#scenario-7-per-branch-environments-shopify-included) |
 | [docs/ci-integration.md](./docs/ci-integration.md) | GitHub Actions setup, `TEST_BASE_URL`/`PROD_BASE_URL`, lanes, merge gate |
 
 ---
@@ -332,14 +360,14 @@ templates/
     seo-scheduled.yml     # Template: weekly workflow (generated by setup wizard)
 src/
   index.ts             # Public API: defineSeoConfig(), loadSeoConfig(), type re-exports
-  load-config.ts       # Resolves seo-checks.json from consumer's cwd or package root
+  load-config.ts       # Resolves seo-checks.json from consumer's .tech-seo-guardrails/ or package root
   config-resolver.ts   # Merges template + page configs, applies lane filter
   config-schema.ts     # Config schema validator: validateConfig(), ValidationError type
   robots-helper.ts     # robots.txt fetching and Googlebot allow/block checking
   sitemap-helper.ts    # Sitemap fetching, URL health checks, link sampling
   shopify-preview.ts   # Shopify preview-theme cookie capture/replay (isShopifyPreviewActive, etc.)
   reporters/
-    seo-summary.ts     # Custom Playwright reporter: groups by severity, writes test-results/seo-summary.md
+    seo-summary.js     # Custom Playwright reporter: groups by severity, writes .tech-seo-guardrails/test-results/seo-summary.md
 tests/
   unit/                # Config validation without a browser
   integration/         # Per-page DOM checks with Googlebot emulation
@@ -349,7 +377,7 @@ tests/
     interceptors.ts    # robots.txt enforcement, third-party blocking
     shadow-dom.ts      # deepQueryAll() — DOM traversal through open shadow roots (mirrors Googlebot)
 scripts/
-  setup.js                   # Setup wizard: .env URLs, seo-checks.json, CI workflows + package.json scripts
+  setup.js                   # Setup wizard: .env URLs, .tech-seo-guardrails/seo-checks.json, CI workflows + package.json scripts
   basic-contract-wizard.js   # Basic mode: builds a minimal seo-checks.json (no CSV crawl needed)
   configure.js               # Custom check/severity manager (npx seo-configure)
   shopify-preview-setup.js   # Playwright globalSetup: captures the Shopify preview-theme cookie once per run

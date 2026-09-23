@@ -155,6 +155,8 @@ Run the full integration suite after merging to main or deploying to a staging e
 
 This runs all merge-lane checks including `renderingValidation` (console errors, failed requests, mixed content) which are too slow or noisy for PR feedback.
 
+**Note:** Scenarios 3 and 4 above show the underlying env vars by hand. The workflows `npx seo-setup` actually generates don't hardcode `TEST_BASE_URL` — they resolve it per branch from `seo-environments.json` at run time. See [Scenario 7](#scenario-7-per-branch-environments-shopify-included) for how that works, for Shopify and non-Shopify projects alike.
+
 ---
 
 ## Scenario 5: GitHub Actions — Weekly production crawl
@@ -202,29 +204,36 @@ SEO_LANE=production npx seo-test --project=unit --project=integration
 
 ---
 
-## Scenario 7: Shopify unpublished preview theme
+## Scenario 7: Per-branch environments (Shopify included)
 
-Shopify doesn't have a separate staging domain the way most platforms do. An "unpublished preview theme" is served on the **same domain** as production — visiting `<your-store>/?preview_theme_id=<id>` sets a cookie and redirects to the clean URL; from then on, any request carrying that cookie sees the preview theme instead of whatever's published. This means `TEST_BASE_URL` and `PROD_BASE_URL` are typically the **same value** for Shopify — the preview theme isn't a different URL, it's the same URL with a cookie flag.
+CI branches rarely all point at the same place: `main` might be a static host that's already running, a `staging` branch might be a Shopify unpublished preview theme, and a feature branch might need its own local server started in the runner. `seo-environments.json` (generated/edited by `npx seo-setup`, Step 4) maps each branch to one of four **strategies** — Shopify is one of the four, not a separate mode:
 
-**What to set:**
-
-```bash
-TEST_BASE_URL=https://your-store.myshopify.com   # same as PROD_BASE_URL
-PROD_BASE_URL=https://your-store.myshopify.com
-SHOPIFY_PREVIEW_THEME_ID=123456789
+```json
+{
+  "default": { "strategy": "static-url", "url": "https://your-site.com" },
+  "branches": {
+    "main":      { "strategy": "static-url", "url": "https://your-site.com" },
+    "staging":   { "strategy": "shopify-preview", "themeId": "123456789" },
+    "feature/*": { "strategy": "start-command", "command": "npm start", "waitUrl": "http://localhost:3000" },
+    "qa":        { "strategy": "wait-for-deployment", "waitUrl": "https://qa.your-site.com" }
+  }
+}
 ```
 
-**How it works:** when `SHOPIFY_PREVIEW_THEME_ID` is set, a Playwright `globalSetup` step (`scripts/shopify-preview-setup.js`) visits `<baseUrl>/?preview_theme_id=<id>` once before any test runs, captures the cookie Shopify sets, and reuses it for every check afterward — both browser navigation (`page.goto()`) and the raw HTTP requests some checks make directly (robots.txt, sitemap, broken-link and redirect-chain checks). You don't need to know Shopify's actual cookie name or format; the framework lets Shopify set it and just replays it.
+- **`static-url`** — a host that's already running (a persistent staging server, or production itself).
+- **`shopify-preview`** — Shopify doesn't have a separate staging domain: an "unpublished preview theme" is served on the **same domain** as production, gated by a cookie set when you visit `<domain>/?preview_theme_id=<id>`. This strategy only needs a `themeId` (blank = the live published theme) — the domain is whatever `PROD_BASE_URL`/`TEST_BASE_URL` already is, since Shopify never needs a second host for it.
+- **`start-command`** — starts a local server in the runner (`command`) and waits for it (`waitUrl`) before testing.
+- **`wait-for-deployment`** — waits for an external deployment to become reachable at `waitUrl`.
 
-**Local development:** in Step 2 (URLs), `npx seo-setup` first asks "Is this a Shopify store?" — answering yes replaces the usual separate Production/Test URL questions with a dedicated sequence: one **domain** (used for both `PROD_BASE_URL` and `TEST_BASE_URL`, since they're the same for Shopify), then a **theme ID to test locally** (blank = test the live published theme). `SEO_CANONICAL_MODE` is set to `production` automatically without asking, since there's no separate host for it to distinguish.
+Branches are matched exactly first, then by glob pattern (`feature/*`), then `default`.
 
-**CI/CD:** preview theme IDs are **fixed per branch**, not dynamic per PR — Shopify has no equivalent of an ephemeral preview URL per pull request the way Vercel or Netlify do. When generating `seo-merge.yml` (Step 4 of the wizard), if you answered "yes" to the Shopify question in Step 2, you'll be asked for a preview theme ID for each branch that triggers tests on merge (blank = that branch tests the live published theme). Only configure this for **persistent branches** (e.g. a long-lived `staging` branch you keep pushing an unpublished theme to) — it isn't meant for the PR lane (`seo-pr.yml`), which isn't touched by this feature at all. Step 4's usual "how is the CI environment prepared" question (start a server / wait for a deployment / already running) is skipped entirely for Shopify — there's no server to start or deployment to wait for, since Shopify hosts everything already.
+**How it's resolved:** every generated workflow (`seo-pr.yml`, `seo-merge.yml`) runs `scripts/resolve-branch-environment.js "${{ github.head_ref || github.ref_name }}"` early — `github.head_ref` is the PR's **source** branch (only set for `pull_request` events) and falls back to `github.ref_name` (the pushed-to branch) for merge/scheduled events, so the same expression works in every lane. The script reads `seo-environments.json`, resolves the matching entry, and writes `strategy`/`test_url`/`shopify_theme_id`/`start_command`/`wait_url` as step outputs, which the rest of the job reads: a conditional step starts the local server (or waits for the deployment) only when the resolved strategy calls for it, and `TEST_BASE_URL`/`SHOPIFY_PREVIEW_THEME_ID` in the test-run step come from those outputs instead of a hardcoded value. `seo-scheduled.yml` doesn't use this at all — it always tests `PROD_BASE_URL` directly, with no branch concept.
 
-Internally this becomes a small lookup baked into the generated workflow:
+**A given branch name means something different in each lane, and the wizard asks accordingly.** GitHub's `pull_request` trigger (`branches:` in `seo-pr.yml`) filters by the PR's *target*, not its source — so a PR from `staging` into `main` runs the PR lane exactly like a PR from `dev` into `main` would, and at runtime `head_ref` resolves to whichever of those actually opened the PR. That means the branches you list when the wizard asks "which branch(es) should PRs target" are **not** the ones that need an environment entry — they only decide *when* the PR lane fires. What needs an entry is whatever branch a PR is usually opened **from**, which the wizard asks for separately, once per configured PR target (a PR into `staging` might typically come from `dev`, while a PR into `main` might typically come from `staging` — a git-flow-style chain, each link asked for on its own). The merge lane doesn't have this ambiguity: a push lands *on* the branch, so the branches you list for "which branches trigger SEO tests on MERGE" are exactly the ones that get an environment entry.
 
-```yaml
-SHOPIFY_PREVIEW_THEME_ID: ${{ fromJSON('{"staging":"123456789","main":""}')[github.ref_name] || '' }}
-```
+**Local development:** the Shopify preview-theme *mechanism* itself (capturing and replaying the cookie) is unrelated to branches — it's controlled by the `SHOPIFY_PREVIEW_THEME_ID` env var, which Step 2 of `npx seo-setup` asks for directly ("Shopify preview theme ID to test locally, blank if not applicable") so you can test one preview theme on your own machine regardless of what any branch is configured to do in CI. Under the hood, a Playwright `globalSetup` step (`scripts/shopify-preview-setup.js`) visits `<baseUrl>/?preview_theme_id=<id>` once before any test runs, captures the cookie Shopify sets, and reuses it for every check afterward — both browser navigation (`page.goto()`) and the raw HTTP requests some checks make directly (robots.txt, sitemap, broken-link and redirect-chain checks). You don't need to know Shopify's actual cookie name or format; the framework lets Shopify set it and just replays it.
+
+**No `seo-environments.json` yet?** The resolver falls back to a single `static-url` strategy built from `TEST_BASE_URL`/`PROD_BASE_URL` for every branch — existing installs keep working unchanged until you opt into per-branch config.
 
 **`SEO_LANE=production` always wins:** the [production lane](#scenario-6-testing-production-directly-manual) is documented to mean "ignore staging config and test the live site directly." If `SHOPIFY_PREVIEW_THEME_ID` is still sitting in your local `.env` from testing a preview theme, running `npm run seo:test:prod` (or any `SEO_LANE=production` run) ignores it and tests the true live theme — the feature never engages under that lane, regardless of what's configured.
 
@@ -256,7 +265,7 @@ The `production` lane is primarily intended for fast validation of unit and inte
 | `PROD_BASE_URL` | No* | Canonical production URL for identity checks. Overrides `seo-checks.json baseUrl` if set. |
 | `SEO_LANE` | No | Lane filter: `pr`, `merge`, `scheduled`, `production`, or empty (runs all checks). |
 | `SEO_SAMPLE_LIMIT` | No | Max pages per template in the integration suite. Overrides `sampleConfig.maxPagesPerTemplate`. Ignored when `SEO_LANE=scheduled`. |
-| `SHOPIFY_PREVIEW_THEME_ID` | No | Shopify only — theme ID of an unpublished preview theme to test. See [Scenario 7](#scenario-7-shopify-unpublished-preview-theme). |
+| `SHOPIFY_PREVIEW_THEME_ID` | No | Shopify only — theme ID of an unpublished preview theme to test locally. In CI, this is resolved per branch from `seo-environments.json` instead. See [Scenario 7](#scenario-7-per-branch-environments-shopify-included). |
 
 *At least one of `PROD_BASE_URL` or `seo-checks.json baseUrl` must be set.
 

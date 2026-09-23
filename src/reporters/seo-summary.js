@@ -13,11 +13,12 @@
 
 const fs = require('fs');
 const path = require('path');
+const { getGuardrailsDir } = require('../load-config');
 
 class SeoSummaryReporter {
   constructor(options) {
     this.results = [];
-    this.outputPath = (options && options.outputPath) || path.join(process.cwd(), 'test-results', 'seo-summary.md');
+    this.outputPath = (options && options.outputPath) || path.join(getGuardrailsDir(), 'test-results', 'seo-summary.md');
   }
 
   onTestEnd(test, result) {

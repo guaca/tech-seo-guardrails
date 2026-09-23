@@ -1,6 +1,17 @@
 # Configuration Reference: `seo-checks.json`
 
-`seo-checks.json` is the contract that defines what your site should look like to Googlebot. Copy `seo-checks.example.json` to `seo-checks.json` and fill it in for your site. This file should **not** be committed to the framework repo (it contains site-specific metadata including page titles, canonical URLs, and expected structured data); add your own `.gitignore` entry if you fork this repo for your project.
+`.tech-seo-guardrails/seo-checks.json` is the contract that defines what your site should look like to Googlebot. Copy `seo-checks.example.json` to `.tech-seo-guardrails/seo-checks.json` and fill it in for your site. **This file should be committed** to your own project — it's your test suite's data, not a secret. Everything else this framework generates (`generator-config.json`, Playwright's HTML report and test output) lives alongside it under `.tech-seo-guardrails/` but should be gitignored — add this to your project's `.gitignore`:
+
+```
+# .tech-seo-guardrails/ — generated & consumed by tech-seo-guardrails.
+# seo-checks.json is the committed SEO contract — intentionally NOT ignored.
+.tech-seo-guardrails/generator-config.json
+.tech-seo-guardrails/playwright-report/
+.tech-seo-guardrails/test-results/
+.tech-seo-guardrails/blob-report/
+```
+
+Don't add a line that ignores `.tech-seo-guardrails/` wholesale — that would also hide `seo-checks.json`.
 
 ---
 

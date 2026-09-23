@@ -3,9 +3,14 @@ node_modules/
 
 # Site-specific local config (see docs/configuration.md)
 .env
+.tech-seo-guardrails/seo-checks.json
+.tech-seo-guardrails/seo-environments.json
+generator-config.json
+playwright-report/
+test-results/
 seo-checks.json
 
-# Captured Shopify preview-theme cookie (see docs/environments.md#scenario-7-shopify-unpublished-preview-theme)
+# Captured Shopify preview-theme cookie (see docs/environments.md#scenario-7-per-branch-environments-shopify-included)
 .shopify-preview-state.json
 
 # Python bytecode and caches
@@ -27,5 +32,6 @@ tests/helpers/interceptors.js
 tests/helpers/shadow-dom.js
 tests/unit/seo-config.spec.js
 tests/unit/shopify-preview.spec.js
+tests/unit/resolve-branch-environment.spec.js
 tests/integration/seo-dom.spec.js
 tests/e2e/seo-links.spec.js

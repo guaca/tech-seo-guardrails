@@ -8,6 +8,8 @@
  */
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
 const { chromium } = require('@playwright/test');
 const { SHOPIFY_STORAGE_STATE_PATH, isShopifyPreviewActive } = require('../src/shopify-preview');
 
@@ -33,6 +35,7 @@ module.exports = async function globalSetup() {
     // Shopify sets its preview-theme cookie on this request and 302s to the
     // clean URL — page.goto() follows the redirect automatically.
     await page.goto(`${baseUrl.replace(/\/$/, '')}/?preview_theme_id=${encodeURIComponent(themeId)}`);
+    fs.mkdirSync(path.dirname(SHOPIFY_STORAGE_STATE_PATH), { recursive: true });
     await context.storageState({ path: SHOPIFY_STORAGE_STATE_PATH });
     console.log(`[shopify-preview] Preview theme cookie captured for theme ${themeId}.`);
   } finally {

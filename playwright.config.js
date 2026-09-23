@@ -20,15 +20,17 @@ if (fs.existsSync(_envPath)) {
   }
 }
 
+// Googlebot Smartphone user-agent (used for mobile-first indexing)
+const { GOOGLEBOT_SMARTPHONE_UA } = require('./src/robots-helper');
+const { getGuardrailsDir } = require('./src/load-config');
+
 // Ensure blob reporter writes to the workspace root, not relative to this config file.
 // When the config lives in node_modules/, Playwright resolves relative blob output paths
 // from the config directory — this forces an absolute path based on the consumer's cwd.
 if (!process.env.PLAYWRIGHT_BLOB_OUTPUT_DIR) {
-  process.env.PLAYWRIGHT_BLOB_OUTPUT_DIR = path.join(process.cwd(), 'blob-report');
+  process.env.PLAYWRIGHT_BLOB_OUTPUT_DIR = path.join(getGuardrailsDir(), 'blob-report');
 }
 
-// Googlebot Smartphone user-agent (used for mobile-first indexing)
-const { GOOGLEBOT_SMARTPHONE_UA } = require('./src/robots-helper');
 const { SHOPIFY_STORAGE_STATE_PATH, isShopifyPreviewActive } = require('./src/shopify-preview');
 
 // Shopify preview-theme support: SHOPIFY_PREVIEW_THEME_ID is unset for everyone
@@ -59,7 +61,7 @@ module.exports = defineConfig({
   timeout: 20_000,
   globalSetup: shopifyPreviewEnabled ? path.resolve(__dirname, 'scripts/shopify-preview-setup.js') : undefined,
   reporter: [
-    ['html', { open: 'never', outputFolder: path.join(process.cwd(), 'playwright-report') }],
+    ['html', { open: 'never', outputFolder: path.join(getGuardrailsDir(), 'playwright-report') }],
     ['list'],
     [path.resolve(__dirname, 'src/reporters/seo-summary.js')],
   ],
@@ -78,7 +80,7 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  outputDir: path.join(process.cwd(), 'test-results'),
+  outputDir: path.join(getGuardrailsDir(), 'test-results'),
   projects: [
     // Tier 1: Unit tests — fast config validation, no browser needed
     {

@@ -11,8 +11,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import { getGuardrailsDir } from './load-config';
 
-export const SHOPIFY_STORAGE_STATE_PATH = path.join(process.cwd(), '.shopify-preview-state.json');
+export const SHOPIFY_STORAGE_STATE_PATH = path.join(getGuardrailsDir(), '.shopify-preview-state.json');
 
 interface StoredCookie {
   name: string;
@@ -39,13 +40,16 @@ export function isShopifyPreviewActive(): boolean {
  * src/sitemap-helper.ts) that don't go through Playwright's own cookie-aware
  * `page`/`request` fixtures.
  */
-export function getShopifyPreviewCookieHeader(targetUrl: string): string | null {
+export function getShopifyPreviewCookieHeader(
+  targetUrl: string,
+  storageStatePath: string = SHOPIFY_STORAGE_STATE_PATH,
+): string | null {
   if (!isShopifyPreviewActive()) return null;
-  if (!fs.existsSync(SHOPIFY_STORAGE_STATE_PATH)) return null;
+  if (!fs.existsSync(storageStatePath)) return null;
 
   let state: { cookies?: StoredCookie[] };
   try {
-    state = JSON.parse(fs.readFileSync(SHOPIFY_STORAGE_STATE_PATH, 'utf-8'));
+    state = JSON.parse(fs.readFileSync(storageStatePath, 'utf-8'));
   } catch {
     return null;
   }

@@ -1,0 +1,15 @@
+{
+  "_comment": "Generated/edited by `npx seo-setup` (Step 4). Maps a branch name (exact, or a glob like \"feature/*\") to how CI should reach that branch's environment. \"default\" covers any branch with no explicit entry. See docs/environments.md.",
+
+  "default": { "strategy": "static-url", "url": "https://your-site.com" },
+
+  "branches": {
+    "main": { "strategy": "static-url", "url": "https://your-site.com" },
+
+    "staging": { "strategy": "shopify-preview", "themeId": "123456789" },
+
+    "feature/*": { "strategy": "start-command", "command": "npm start", "waitUrl": "http://localhost:3000" },
+
+    "qa": { "strategy": "wait-for-deployment", "waitUrl": "https://qa.your-site.com" }
+  }
+}
